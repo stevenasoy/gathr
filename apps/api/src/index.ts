@@ -94,7 +94,7 @@ app.use('/api/reviews', resolveUser, reviewsRouter)
 // --- 404 (registered after routes) ---
 app.use((_req: Request, res: Response) => res.status(404).json({ error: 'Not found.' }))
 
-// --- Error handler (no stack traces in production) ---
+// --- Error handler (no stack traces or raw driver messages in production) ---
 interface AppError {
   status?: number
   code?: string
@@ -104,8 +104,32 @@ interface AppError {
 app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err)
   let status = err.status || 500
-  if (err.code === '23505') status = 409 // unique_violation
-  const body: { error: string; stack?: string } = { error: err.message || 'Server error.' }
+  // Default to the driver/app message so dev stays debuggable; prod may swap
+  // this for a generic safe message below depending on the error class.
+  let message = err.message || 'Server error.'
+
+  // Map known Postgres error codes to safe, client-facing responses. These
+  // generic messages intentionally avoid leaking table/column/constraint names
+  // that the raw driver message would otherwise expose.
+  if (err.code === '23505') {
+    // unique_violation — preserve existing behavior: 409 with the original
+    // message (callers may rely on this shape).
+    status = 409
+  } else if (err.code === '23503') {
+    // foreign_key_violation — referential conflict with a related resource.
+    status = 409
+    if (isProd) message = 'Conflict with related resource.'
+  } else if (err.code === '22P02') {
+    // invalid_input_syntax — malformed identifier/value sent to Postgres.
+    status = 400
+    if (isProd) message = 'Invalid input.'
+  } else if (status >= 500 && isProd) {
+    // Unexpected server errors: never surface raw driver/app messages to
+    // clients in production.
+    message = 'Something went wrong.'
+  }
+
+  const body: { error: string; stack?: string } = { error: message }
   if (!isProd) body.stack = err.stack
   res.status(status).json(body)
 })

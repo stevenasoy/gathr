@@ -24,9 +24,24 @@ router.get('/venue/:id', async (req: Request, res: Response, next: NextFunction)
 })
 
 // GET /api/reviews/stats — Public aggregate stats for the venue catalog
+//
+// In-memory cache: the materialized view query is already cheap, but stats are
+// requested on every venue-catalog load, so we avoid even that read on hot paths.
+// Stats are approximate aggregates and 30s staleness is acceptable; the cache is
+// purely TTL-based (no explicit invalidation), so there is no stale-lock bug —
+// every entry expires within STATS_TTL_MS regardless of trigger-driven refreshes.
+const STATS_TTL_MS = 30_000
+let statsCache: { data: Record<string, { count: number; avg: number }>; expiry: number } | null = null
+
 router.get('/stats', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // 1. Try querying the database view first for optimal O(N_venues) database-side calculation.
+    // 0. Return cached stats if fresh.
+    if (statsCache && statsCache.expiry > Date.now()) {
+      res.json({ stats: statsCache.data })
+      return
+    }
+
+    // 1. Try querying the materialized view first for optimal O(N_venues) database-side read.
     const { data: viewData, error: viewError } = await (req as AuthedRequest).supabase
       .from('venue_review_stats')
       .select('venue_id, count, avg')
@@ -36,11 +51,13 @@ router.get('/stats', async (req: Request, res: Response, next: NextFunction) => 
       for (const r of viewData) {
         stats[r.venue_id] = { count: Number(r.count), avg: Number(r.avg) }
       }
+      statsCache = { data: stats, expiry: Date.now() + STATS_TTL_MS }
       res.json({ stats })
       return
     }
 
-    // 2. Fallback to in-memory processing if the view hasn't been created yet.
+    // 2. Fallback to in-memory full-table aggregation if the view query errors
+    //    (e.g. the materialized view hasn't been created yet in this environment).
     const { data, error } = await (req as AuthedRequest).supabase
       .from('reviews')
       .select('venue_id, rating')
@@ -59,6 +76,7 @@ router.get('/stats', async (req: Request, res: Response, next: NextFunction) => 
         avg: Math.round((stats[id].sum / stats[id].count) * 100) / 100
       }
     }
+    statsCache = { data: finalStats, expiry: Date.now() + STATS_TTL_MS }
     res.json({ stats: finalStats })
   } catch (e) {
     next(e)
