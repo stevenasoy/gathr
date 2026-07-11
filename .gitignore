@@ -1,7 +1,31 @@
+# dependencies
 node_modules
+
+# build output
 dist
+
+# environment — never commit real env files; only .env.example variants are tracked
 .env
+.env.*
 .env.local
+.env.*.local
+!.env.example
+!.env.*.example
+
+# secrets / key material — never commit private keys, certs, or service-account JSON
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.cer
+*service-account*.json
+
+# OS
 .DS_Store
 
+# legacy
 /video-ad
+# dev scratch — automated screenshots / driver script
+drive-*.png
+drive.mjs

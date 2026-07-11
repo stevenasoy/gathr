@@ -1,0 +1,130 @@
+import express from 'express'
+import type { Request, Response, NextFunction } from 'express'
+import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
+import morgan from 'morgan'
+import { pathToFileURL } from 'node:url'
+import { resolveUser } from './middleware/auth.js'
+import venuesRouter from './routes/venues.js'
+import bookingsRouter from './routes/bookings.js'
+import conversationsRouter from './routes/conversations.js'
+import messagesRouter from './routes/messages.js'
+import reviewsRouter from './routes/reviews.js'
+
+const app = express()
+const PORT = Number(process.env.PORT) || 3001
+const isProd = process.env.NODE_ENV === 'production'
+
+// --- Security middleware ---
+app.use(helmet())
+
+// Trust the reverse proxy hop count so express-rate-limit reads the real
+// client IP from X-Forwarded-For instead of collapsing every caller onto the
+// proxy's single IP (which would either never throttle an abuser or trip the
+// global bucket for everyone at once). Defaults to 1 in prod, 0 in dev.
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? (isProd ? 1 : 0)))
+
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+// No wildcard origin: if CORS_ORIGIN is unset, deny cross-origin entirely so
+// the API is never wide open in production by accident.
+app.use(cors(allowedOrigins.length ? { origin: allowedOrigins, credentials: true } : { origin: false }))
+
+app.use(express.json({ limit: '100kb' }))
+app.use(morgan(isProd ? 'combined' : 'dev'))
+
+// --- Rate limiting ---
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+}))
+
+// --- Routes ---
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+// Tighter limiter for the public contact form: 3 submissions per 15 minutes
+// per IP. The global 100/15min limiter still applies, but this caps the spam
+// vector on the one unauthenticated write endpoint.
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many submissions. Please try again later.' },
+})
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+app.post('/api/contact', contactLimiter, (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, email, topic, message } = req.body as {
+      name?: string; email?: string; topic?: string; message?: string
+    }
+    if (!name || !email || !topic || !message) {
+      res.status(400).json({ error: 'All fields are required.' })
+      return
+    }
+    if (!EMAIL_RE.test(email)) {
+      res.status(400).json({ error: 'A valid email is required.' })
+      return
+    }
+    // Persist/forward the submission downstream rather than logging PII. For
+    // now we only record a non-PII reference so the log stream carries no
+    // names, emails, or message bodies.
+    console.log('contact submission received', { topic, timestamp: new Date().toISOString() })
+    res.json({ success: true, message: 'Message received successfully.' })
+  } catch (e) {
+    next(e)
+  }
+})
+
+app.use('/api/venues', resolveUser, venuesRouter)
+app.use('/api/bookings', resolveUser, bookingsRouter)
+app.use('/api/conversations', resolveUser, conversationsRouter)
+app.use('/api/messages', resolveUser, messagesRouter)
+app.use('/api/reviews', resolveUser, reviewsRouter)
+
+// --- 404 (registered after routes) ---
+app.use((_req: Request, res: Response) => res.status(404).json({ error: 'Not found.' }))
+
+// --- Error handler (no stack traces in production) ---
+interface AppError {
+  status?: number
+  code?: string
+  message?: string
+  stack?: string
+}
+app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(err)
+  let status = err.status || 500
+  if (err.code === '23505') status = 409 // unique_violation
+  const body: { error: string; stack?: string } = { error: err.message || 'Server error.' }
+  if (!isProd) body.stack = err.stack
+  res.status(status).json(body)
+})
+
+// Only bind the port when run as the main module (e.g. `node dist/index.js`),
+// so tests can import the app without starting a server.
+const isMain = process.argv[1] ? import.meta.url === pathToFileURL(process.argv[1]).href : false
+const server = isMain
+  ? app.listen(PORT, () => console.log(`@gathr/api running on http://localhost:${PORT}`))
+  : null
+
+// --- Graceful shutdown ---
+function shutdown(signal: string): void {
+  console.log(`${signal} received, closing server…`)
+  server?.close(() => process.exit(0))
+  // Force exit if connections won't drain within 10s.
+  setTimeout(() => process.exit(1), 10000).unref()
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('SIGINT', () => shutdown('SIGINT'))
+
+export default app
