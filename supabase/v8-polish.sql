@@ -32,10 +32,10 @@ drop index if exists public.venues_status_idx;
 -- wrong object type.
 do $$
 begin
-  drop view if exists public.venue_review_stats;
+  execute 'drop view if exists public.venue_review_stats';
 exception when sqlstate '42809' then
   -- Object exists but is a materialized view, not a plain view.
-  drop materialized view if exists public.venue_review_stats;
+  execute 'drop materialized view if exists public.venue_review_stats';
 end $$;
 
 create materialized view public.venue_review_stats as
