@@ -42,9 +42,14 @@ group by venue_id;
 create unique index if not exists venue_review_stats_pk_idx on public.venue_review_stats (venue_id);
 create index if not exists venue_review_stats_avg_idx on public.venue_review_stats (avg desc);
 
--- Respect caller RLS (the view is a public aggregate, but making it invoker
--- keeps it consistent with the table-level policies and prevents future leaks).
-alter materialized view public.venue_review_stats set (security_invoker = true);
+-- Respect caller RLS where supported (PG15+). On older Postgres the parameter
+-- does not exist; the aggregate view only exposes venue_id/count/avg anyway.
+do $$
+begin
+  execute 'alter materialized view public.venue_review_stats set (security_invoker = true)';
+exception when others then
+  raise notice 'security_invoker not available on this Postgres version; skipped';
+end $$;
 
 -- Auto-refresh on review mutations. SECURITY DEFINER because anon/authenticated
 -- need to be able to trigger the refresh without owning the materialized view.
