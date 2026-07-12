@@ -78,4 +78,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npm audit --audit-level=high --omit=dev
+      # Audit all dependencies (including dev). The previous --omit=dev flag hid
+      # the vitest critical advisory (GHSA-5xrq-8626-4rwp) from CI; dev-only deps
+      # can still affect CI/test environments and developer machines.
+      - run: npm audit --audit-level=high

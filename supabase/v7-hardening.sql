@@ -15,10 +15,10 @@
 --         hit an RLS deny (500). Add "bookings: guest update own".
 --
 -- NOTE: M21 + M22 (public column-exposure leaks on reviews.user_id / venues.owner_id)
---       are deferred to supabase/v8-public-column-views.sql. They revoke SELECT on the
---       base tables, which breaks apps/api routes that read public.venues /
---       public.reviews directly; those routes must migrate to the v8 views in the same
---       release. Do NOT run v8 until the API route view-migration lands.
+--       are implemented in supabase/v9-public-views.sql. Those views revoke anon SELECT
+--       on the base tables, so apps/api routes that serve public reads must query
+--       public.venues_live / public.reviews_public before v9 is applied. See
+--       docs/ops.md for the migration order and deployment pairing.
 
 -- ============================================================
 -- 1. H2: bookings BEFORE UPDATE trigger guard_bookings_host_mutable
