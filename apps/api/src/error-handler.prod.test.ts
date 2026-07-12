@@ -1,15 +1,14 @@
-// Verifies the production error-handler branch: raw Supabase/Postgres errors
-// are genericized and carry no stack trace. Runs with NODE_ENV=production so
-// `exposeErrorDetails` is false at app load (the safe path). The Supabase
-// client is mocked; `hoisted.queryError` lets each test choose the error the
-// authenticated query returns, so a real route throws and hits the handler.
-process.env.NODE_ENV = 'production'
-process.env.SUPABASE_URL = 'https://fake-test.supabase.co'
-process.env.SUPABASE_ANON_KEY = 'sb_publishable_test_fakefakefakefakefakefake'
-process.env.SUPABASE_SERVICE_ROLE_KEY = 'dummy-service-key'
-process.env.SUPABASE_JWT_SECRET = '' // force resolveFromCookies to use getUser()
+import { vi } from 'vitest'
 
-import { describe, it, expect, vi } from 'vitest'
+vi.hoisted(() => {
+  process.env.NODE_ENV = 'production'
+  process.env.SUPABASE_URL = 'https://fake-test.supabase.co'
+  process.env.SUPABASE_ANON_KEY = 'sb_publishable_test_fakefakefakefakefakefake'
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'dummy-service-key'
+  process.env.SUPABASE_JWT_SECRET = '' // force resolveFromCookies to use getUser()
+})
+
+import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 
 const hoisted = vi.hoisted(() => ({
@@ -65,7 +64,7 @@ vi.mock('@supabase/supabase-js', () => {
 })
 
 // Imported AFTER env + mock are in place.
-const app = (await import('./index.js')).default
+import app from './index.js'
 
 function cookies(res: { headers: { 'set-cookie'?: string | string[] } }): string {
   const raw = res.headers['set-cookie']

@@ -1,12 +1,13 @@
-// Fake test fixtures — NO real Supabase credentials. The supabase client layer
-// is mocked (see vi.mock below) so these tests never reach the network; the env
-// vars exist only to satisfy any module that reads them at load time.
-process.env.NODE_ENV = 'test'
-process.env.SUPABASE_URL = 'https://fake-test.supabase.co'
-process.env.SUPABASE_ANON_KEY = 'sb_publishable_test_fakefakefakefakefakefake'
-process.env.SUPABASE_SERVICE_ROLE_KEY = 'dummy-service-key'
+import { vi } from 'vitest'
 
-import { describe, it, expect, vi } from 'vitest'
+vi.hoisted(() => {
+  process.env.NODE_ENV = 'test'
+  process.env.SUPABASE_URL = 'https://fake-test.supabase.co'
+  process.env.SUPABASE_ANON_KEY = 'sb_publishable_test_fakefakefakefakefakefake'
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'dummy-service-key'
+})
+
+import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import app from './index.js'
 
