@@ -150,17 +150,21 @@ export default function HostDashboard() {
     return (
       <>
         <main>
-          <section className="page-hero"><div className="wrap">
-            <span className="page-eyebrow">For Hosts</span>
-            <h1>Host dashboard</h1>
-            <p>Sign in to manage your venues and booking requests.</p>
-          </div></section>
-          <div className="wrap page-body"><div className="empty-state">
-            <Inbox size={40} strokeWidth={1.5} />
-            <h2>Sign in to host</h2>
-            <p>Your listings and requests are tied to your account.</p>
-            <Link to="/signin" state={{ from: '/host/dashboard' }} className="btn-primary" style={{ width: 'auto', padding: '13px 22px', display: 'inline-block' }}>Sign in</Link>
-          </div></div>
+          <section className="py-14 pb-10 bg-surface border-b border-line text-center">
+            <div className="max-w-wrap mx-auto px-10">
+              <span className="inline-block text-xs font-bold tracking-[0.14em] uppercase text-brand mb-3">For Hosts</span>
+              <h1 className="text-[clamp(30px,4vw,44px)] font-extrabold max-w-[760px] mx-auto leading-[1.1]">Host dashboard</h1>
+              <p className="text-ink-soft text-[17px] max-w-[620px] mx-auto mt-4">Sign in to manage your venues and booking requests.</p>
+            </div>
+          </section>
+          <div className="max-w-wrap mx-auto px-10 py-12 pb-20">
+            <div className="text-center py-[60px] px-5 text-ink-soft">
+              <Inbox size={40} strokeWidth={1.5} className="mb-3.5 mx-auto text-ink-faint" />
+              <h2 className="text-[22px] font-extrabold mb-2 text-ink">Sign in to host</h2>
+              <p className="max-w-[460px] mx-auto mb-5 text-[15px] leading-relaxed">Your listings and requests are tied to your account.</p>
+              <Link to="/signin" state={{ from: '/host/dashboard' }} className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]" style={{ width: 'auto', padding: '13px 22px', display: 'inline-block' }}>Sign in</Link>
+            </div>
+          </div>
         </main>
         <Footer />
       </>
@@ -189,82 +193,82 @@ export default function HostDashboard() {
   return (
     <>
       {/* Host workspace nav */}
-      <div className="host-nav">
-        <div className="wrap host-nav-row">
-          <div className="host-tabs">
+      <div className="relative z-[35] bg-white border-b border-line">
+        <div className="max-w-wrap mx-auto px-10 flex items-center justify-between h-[60px] gap-4">
+          <div className="flex gap-1">
             {TABS.map((t) => (
-              <button key={t.id} className={'host-tab' + (tab === t.id ? ' on' : '')} onClick={() => changeTab(t.id)}>{t.label}</button>
+              <button key={t.id} className={`py-2 px-3.5 rounded-full font-semibold text-[15px] transition-colors duration-150 ${tab === t.id ? 'text-ink bg-tint' : 'text-ink-soft hover:bg-tint hover:text-ink'}`} onClick={() => changeTab(t.id)}>{t.label}</button>
             ))}
           </div>
-          <div className="host-nav-right">
+          <div className="flex items-center gap-2.5">
             <button className="host-link" onClick={goTraveling} style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               <Plane size={16} /> Switch to gathering
             </button>
-            <Link to="/host/new" className="btn-primary" style={{ width: 'auto', padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <Link to="/host/new" className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]" style={{ width: 'auto', padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               <Plus size={16} /> Add a venue
             </Link>
           </div>
         </div>
       </div>
 
-      <main className="wrap page-body">
+      <main className="max-w-wrap mx-auto px-10 py-12 pb-20">
         {error && (
-          <div className="form-error" style={{ marginBottom: 18, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+          <div className="bg-[#fdecef] border border-[#f5c2cd] text-[#a01230] text-[13.5px] p-2.5 px-3.5 rounded-[10px] mb-[18px] flex justify-between gap-3">
             <span>{error}</span>
-            <button className="btn-clear" onClick={load} style={{ color: 'inherit' }}>Retry</button>
+            <button className="font-semibold text-[13px] hover:underline" onClick={load} style={{ color: 'inherit' }}>Retry</button>
           </div>
         )}
         {loading || authLoading ? (
-          <div className="empty-state"><p>Loading your dashboard…</p></div>
+          <div className="text-center py-[60px] px-5 text-ink-soft"><p>Loading your dashboard…</p></div>
         ) : (
           <>
             {/* ---------- TODAY ---------- */}
             {tab === 'today' && (
               <>
-                <h1 className="dash-title">Welcome back{displayName ? `, ${displayName}` : ''}.</h1>
+                <h1 className="text-[28px] font-extrabold my-2 mb-5">Welcome back{displayName ? `, ${displayName}` : ''}.</h1>
 
-                <div className="today-pills">
-                  <button className={'today-pill' + (todayView === 'today' ? ' on' : '')} onClick={() => setTodayView('today')}>Today</button>
-                  <button className={'today-pill' + (todayView === 'upcoming' ? ' on' : '')} onClick={() => setTodayView('upcoming')}>
-                    Upcoming{upcomingEvents.length > 0 && <span className="count-pill" style={{ marginLeft: 6 }}>{upcomingEvents.length}</span>}
+                <div className="inline-flex gap-2 mb-6">
+                  <button className={`py-2 px-5 rounded-full font-semibold text-[15px] inline-flex items-center transition-colors duration-150 ${todayView === 'today' ? 'bg-ink text-white' : 'bg-tint text-ink hover:bg-line-strong'}`} onClick={() => setTodayView('today')}>Today</button>
+                  <button className={`py-2 px-5 rounded-full font-semibold text-[15px] inline-flex items-center transition-colors duration-150 ${todayView === 'upcoming' ? 'bg-ink text-white' : 'bg-tint text-ink hover:bg-line-strong'}`} onClick={() => setTodayView('upcoming')}>
+                    Upcoming{upcomingEvents.length > 0 && <span className="inline-grid place-items-center min-w-[22px] h-[22px] px-[7px] rounded-full bg-brand text-white text-xs font-bold ml-1.5">{upcomingEvents.length}</span>}
                   </button>
                 </div>
 
                 {todayView === 'today' ? (
                   pending.length === 0 && todayEvents.length === 0 ? (
-                    <div className="empty-state">
-                      <CalendarCheck size={40} strokeWidth={1.5} />
-                      <h2>You don't have any reservations</h2>
-                      <p>When guests request your venues, they'll show up here for you to confirm.</p>
-                      {venues.length === 0 && <Link to="/host/new" className="btn-primary" style={{ width: 'auto', padding: '13px 22px', display: 'inline-block' }}>List your first space</Link>}
+                    <div className="text-center py-[60px] px-5 text-ink-soft">
+                      <CalendarCheck size={40} strokeWidth={1.5} className="mb-3.5 mx-auto text-ink-faint" />
+                      <h2 className="text-[22px] font-extrabold mb-2 text-ink">You don't have any reservations</h2>
+                      <p className="max-w-[460px] mx-auto mb-5 text-[15px] leading-relaxed">When guests request your venues, they'll show up here for you to confirm.</p>
+                      {venues.length === 0 && <Link to="/host/new" className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]" style={{ width: 'auto', padding: '13px 22px', display: 'inline-block' }}>List your first space</Link>}
                     </div>
                   ) : (
                     <>
-                      <h2 className="dash-h2"><Inbox size={20} /> Pending requests {pending.length > 0 && <span className="count-pill">{pending.length}</span>}</h2>
+                      <h2 className="text-[19px] font-extrabold flex items-center gap-2 m-0 mb-4"><Inbox size={20} className="text-brand" /> Pending requests {pending.length > 0 && <span className="inline-grid place-items-center min-w-[22px] h-[22px] px-[7px] rounded-full bg-brand text-white text-xs font-bold">{pending.length}</span>}</h2>
                       {pending.length ? (
-                        <div className="booking-list" style={{ marginBottom: 38 }}>
+                        <div className="flex flex-col gap-3.5" style={{ marginBottom: 38 }}>
                           {pending.map((b) => <RequestRow key={b.id} b={b} onStatus={onStatus} />)}
                         </div>
-                      ) : <p className="dash-muted" style={{ marginBottom: 38 }}>No pending requests right now.</p>}
+                      ) : <p className="text-ink-soft text-[15px] mb-[38px]">No pending requests right now.</p>}
 
-                      <h2 className="dash-h2"><CalendarCheck size={20} /> Happening today</h2>
+                      <h2 className="text-[19px] font-extrabold flex items-center gap-2 m-0 mb-4"><CalendarCheck size={20} className="text-brand" /> Happening today</h2>
                       {todayEvents.length ? (
-                        <div className="booking-list">
+                        <div className="flex flex-col gap-3.5">
                           {todayEvents.map((b) => <RequestRow key={b.id} b={b} onStatus={onStatus} />)}
                         </div>
-                      ) : <p className="dash-muted">Nothing scheduled for today.</p>}
+                      ) : <p className="text-ink-soft text-[15px]">Nothing scheduled for today.</p>}
                     </>
                   )
                 ) : (
                   upcomingEvents.length ? (
-                    <div className="booking-list">
+                    <div className="flex flex-col gap-3.5">
                       {upcomingEvents.map((b) => <RequestRow key={b.id} b={b} onStatus={onStatus} />)}
                     </div>
                   ) : (
-                    <div className="empty-state">
-                      <CalendarCheck size={40} strokeWidth={1.5} />
-                      <h2>No upcoming events</h2>
-                      <p>Confirmed bookings with a future date will appear here.</p>
+                    <div className="text-center py-[60px] px-5 text-ink-soft">
+                      <CalendarCheck size={40} strokeWidth={1.5} className="mb-3.5 mx-auto text-ink-faint" />
+                      <h2 className="text-[22px] font-extrabold mb-2 text-ink">No upcoming events</h2>
+                      <p className="max-w-[460px] mx-auto mb-5 text-[15px] leading-relaxed">Confirmed bookings with a future date will appear here.</p>
                     </div>
                   )
                 )}
@@ -279,18 +283,18 @@ export default function HostDashboard() {
             {/* ---------- BOOKINGS (history) ---------- */}
             {tab === 'bookings' && (
               <>
-                <h1 className="dash-title">Bookings</h1>
-                <div className="today-pills" style={{ flexWrap: 'wrap' }}>
+                <h1 className="text-[28px] font-extrabold my-2 mb-5">Bookings</h1>
+                <div className="inline-flex gap-2 mb-6 flex-wrap">
                   {BOOKING_FILTERS.map((f) => (
-                    <button key={f.id} className={'today-pill' + (bookingsFilter === f.id ? ' on' : '')} onClick={() => setBookingsFilter(f.id)}>{f.label}</button>
+                    <button key={f.id} className={`py-2 px-5 rounded-full font-semibold text-[15px] inline-flex items-center transition-colors duration-150 ${bookingsFilter === f.id ? 'bg-ink text-white' : 'bg-tint text-ink hover:bg-line-strong'}`} onClick={() => setBookingsFilter(f.id)}>{f.label}</button>
                   ))}
                 </div>
                 {bookingsList.length ? (
-                  <div className="booking-list">
+                  <div className="flex flex-col gap-3.5">
                     {bookingsList.map((b) => <RequestRow key={b.id} b={b} onStatus={onStatus} />)}
                   </div>
                 ) : (
-                  <div className="empty-state" style={{ padding: '36px 20px' }}>
+                  <div className="text-center py-9 px-5 text-ink-soft">
                     <p>No {bookingsFilter === 'all' ? '' : bookingsFilter + ' '}bookings yet.</p>
                   </div>
                 )}
@@ -300,14 +304,14 @@ export default function HostDashboard() {
             {/* ---------- LISTINGS ---------- */}
             {tab === 'listings' && (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-                  <h1 className="dash-title" style={{ margin: 0 }}>Your listings</h1>
+                <div className="flex justify-between items-center mb-[18px]">
+                  <h1 className="text-[28px] font-extrabold m-0">Your listings</h1>
                 </div>
                 {venues.length ? (
                   <div className="grid">
                     {venues.map((v) => (
-                      <div className="card host-card-item" key={v.id}>
-                        <Link to={`/host/edit/${v.id}`} className="card-media" style={{ display: 'block', aspectRatio: '3/2' }}>
+                      <div className="border border-line rounded-lg overflow-hidden" key={v.id}>
+                        <Link to={`/host/edit/${v.id}`} className="block relative aspect-[3/2] rounded-none overflow-hidden bg-gradient border-b border-line">
                           <img
                             src={withWidth(v.images[0], 600)}
                             alt={v.name}
@@ -318,36 +322,36 @@ export default function HostDashboard() {
                             sizes={cardSizes}
                             srcSet={srcSet(v.images[0], [400, 600])}
                             onError={(e) => { e.currentTarget.style.display = 'none' }}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            className="w-full h-full object-cover"
                           />
-                          <span className={'card-badge status-pill ' + (v.status === 'live' ? 'status-confirmed' : 'status-cancelled')}>
+                          <span className={`absolute top-3 left-3 bg-white/[0.96] text-ink text-[11px] font-bold uppercase tracking-[0.05em] py-[5px] px-2.5 rounded-full shadow-card border border-black/[0.04] ${v.status === 'live' ? 'bg-[#e6f6ec] text-[#137a3c]' : 'bg-tint text-ink-soft'}`}>
                             {v.status === 'live' ? 'Live' : 'Unlisted'}
                           </span>
                         </Link>
-                        <div className="card-body">
-                          <div className="card-top"><span className="card-name">{v.name}</span></div>
-                          <div className="card-sub">{v.area ? `${v.area}, ` : ''}{v.city}</div>
-                          <div className="card-price"><b>{peso(v.pricePerHour)}</b> / {unitWord(v.priceUnit)}</div>
-                          <div className="listing-actions">
-                            <Link to={`/host/edit/${v.id}`} className="listing-action"><Pencil size={14} /> Edit</Link>
-                            <button className="listing-action" onClick={() => onToggleStatus(v)} disabled={busyId === v.id}>
+                        <div className="p-4 pb-4">
+                          <div className="flex justify-between gap-2.5 items-baseline"><span className="font-outfit font-bold text-base text-ink tracking-[-0.01em]">{v.name}</span></div>
+                          <div className="text-ink-soft text-[13.5px] mt-0.5">{v.area ? `${v.area}, ` : ''}{v.city}</div>
+                          <div className="mt-1.5 text-sm text-ink-soft"><b className="font-mono font-bold text-[15.5px] text-ink">{peso(v.pricePerHour)}</b> / {unitWord(v.priceUnit)}</div>
+                          <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-line">
+                            <Link to={`/host/edit/${v.id}`} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft py-1.5 px-2.5 rounded-lg border border-line-strong bg-white transition-colors duration-150 hover:bg-tint hover:text-ink"><Pencil size={14} /> Edit</Link>
+                            <button className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft py-1.5 px-2.5 rounded-lg border border-line-strong bg-white transition-colors duration-150 hover:bg-tint hover:text-ink" onClick={() => onToggleStatus(v)} disabled={busyId === v.id}>
                               {v.status === 'live' ? <><EyeOff size={14} /> Unlist</> : <><Eye size={14} /> List</>}
                             </button>
                             {v.status === 'live' && (
-                              <Link to={`/venue/${v.id}`} className="listing-action"><ExternalLink size={14} /> View</Link>
+                              <Link to={`/venue/${v.id}`} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft py-1.5 px-2.5 rounded-lg border border-line-strong bg-white transition-colors duration-150 hover:bg-tint hover:text-ink"><ExternalLink size={14} /> View</Link>
                             )}
-                            <button className="listing-action danger" onClick={() => onDelete(v.id)} disabled={busyId === v.id}><Trash2 size={14} /> Delete</button>
+                            <button className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#a01230] py-1.5 px-2.5 rounded-lg border border-[#f1c9d2] bg-white transition-colors duration-150 hover:bg-[#fdecef]" onClick={() => onDelete(v.id)} disabled={busyId === v.id}><Trash2 size={14} /> Delete</button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="empty-state">
-                    <MapPin size={40} strokeWidth={1.5} />
-                    <h2>No listings yet</h2>
-                    <p>Add your first venue and it goes live on Gathr right away.</p>
-                    <Link to="/host/new" className="btn-primary" style={{ width: 'auto', padding: '13px 22px', display: 'inline-block' }}>Add a venue</Link>
+                  <div className="text-center py-[60px] px-5 text-ink-soft">
+                    <MapPin size={40} strokeWidth={1.5} className="mb-3.5 mx-auto text-ink-faint" />
+                    <h2 className="text-[22px] font-extrabold mb-2 text-ink">No listings yet</h2>
+                    <p className="max-w-[460px] mx-auto mb-5 text-[15px] leading-relaxed">Add your first venue and it goes live on Gathr right away.</p>
+                    <Link to="/host/new" className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]" style={{ width: 'auto', padding: '13px 22px', display: 'inline-block' }}>Add a venue</Link>
                   </div>
                 )}
               </>
@@ -356,8 +360,8 @@ export default function HostDashboard() {
             {/* ---------- MESSAGES ---------- */}
             {tab === 'messages' && (
               <>
-                <h1 className="dash-title">Messages</h1>
-                <Suspense fallback={<p className="dash-muted">Loading messages…</p>}>
+                <h1 className="text-[28px] font-extrabold my-2 mb-5">Messages</h1>
+                <Suspense fallback={<p className="text-ink-soft">Loading messages…</p>}>
                   <Messages role="host" embedded />
                 </Suspense>
               </>
@@ -372,25 +376,25 @@ export default function HostDashboard() {
 
 function RequestRow({ b, onStatus }: { b: BookingRow; onStatus: (id: string, status: string) => void }) {
   return (
-    <div className="booking-row">
-      <div className="booking-row-main">
-        <div className="booking-row-top">
-          <Link to={`/bookings/${b.id}`} className="booking-venue">{b.venue_name}</Link>
-          <span className={'status-pill status-' + b.status}>{b.status}</span>
+    <div className="flex justify-between items-center gap-[18px] border border-line rounded p-[18px] px-5 bg-white flex-col md:flex-row md:items-center">
+      <div className="w-full">
+        <div className="flex items-center gap-2.5 mb-2">
+          <Link to={`/bookings/${b.id}`} className="font-bold text-base text-ink hover:text-brand">{b.venue_name}</Link>
+          <span className={`text-[11px] font-bold uppercase tracking-[0.04em] py-1 px-2 rounded-full ${b.status === 'requested' ? 'bg-[#fef3e2] text-[#9a6700]' : b.status === 'confirmed' ? 'bg-[#e6f6ec] text-[#137a3c]' : 'bg-tint text-ink-soft'}`}>{b.status}</span>
         </div>
-        <div className="booking-row-meta">
-          <span><CalendarCheck size={15} /> {fmtDate(b.event_date)}</span>
-          {b.event_type && <span><MapPin size={15} /> {b.event_type}</span>}
-          <span><Clock size={15} /> {b.hours} hrs</span>
-          {b.guests && <span><Users size={15} /> {b.guests} guests</span>}
-          <span><b style={{ color: 'var(--ink)' }}>{peso(b.total_php)}</b></span>
+        <div className="flex flex-wrap gap-3.5 text-ink-soft text-[13.5px]">
+          <span className="inline-flex items-center gap-1"><CalendarCheck size={15} className="text-ink-faint" /> <span className="font-mono">{fmtDate(b.event_date)}</span></span>
+          {b.event_type && <span className="inline-flex items-center gap-1"><MapPin size={15} className="text-ink-faint" /> {b.event_type}</span>}
+          <span className="inline-flex items-center gap-1"><Clock size={15} className="text-ink-faint" /> <span className="font-mono">{b.hours}</span> hrs</span>
+          {b.guests && <span className="inline-flex items-center gap-1"><Users size={15} className="text-ink-faint" /> <span className="font-mono">{b.guests}</span> guests</span>}
+          <span><b className="font-mono text-ink">{peso(b.total_php)}</b></span>
         </div>
-        {b.note && <div className="req-note"><StickyNote size={15} /> <span>{b.note}</span></div>}
+        {b.note && <div className="mt-2 text-[13.5px] text-ink-soft flex gap-1.5 items-start"><StickyNote size={15} className="text-brand shrink-0 mt-0.5" /> <span>{b.note}</span></div>}
       </div>
       {b.status === 'requested' && (
-        <div className="booking-row-side" style={{ flexDirection: 'row', gap: 8 }}>
-          <button className="btn-confirm" onClick={() => onStatus(b.id, 'confirmed')}><Check size={15} /> Confirm</button>
-          <button className="btn-decline" onClick={() => onStatus(b.id, 'cancelled')}><X size={15} /> Decline</button>
+        <div className="flex flex-row gap-2 w-full md:w-auto justify-end">
+          <button className="inline-flex items-center gap-1 bg-brand text-white font-semibold text-[13px] py-[9px] px-3.5 rounded-[10px] transition-[filter] duration-150 hover:brightness-[1.06]" onClick={() => onStatus(b.id, 'confirmed')}><Check size={15} /> Confirm</button>
+          <button className="inline-flex items-center gap-1 bg-white text-ink-soft border border-line-strong font-semibold text-[13px] py-[9px] px-3.5 rounded-[10px] transition-colors duration-150 hover:bg-tint" onClick={() => onStatus(b.id, 'cancelled')}><X size={15} /> Decline</button>
         </div>
       )}
     </div>
@@ -417,36 +421,36 @@ function CalendarTab({ month, setMonth, requests }: { month: Date; setMonth: (d:
 
   return (
     <>
-      <div className="cal-head">
-        <h1 className="dash-title" style={{ margin: 0 }}>{MONTHS[m]} {year}</h1>
-        <div className="cal-nav">
-          <button onClick={() => setMonth(new Date(year, m - 1, 1))} aria-label="Previous month"><ChevronLeft size={18} /></button>
-          <button onClick={() => setMonth(new Date())} className="cal-today-btn">Today</button>
-          <button onClick={() => setMonth(new Date(year, m + 1, 1))} aria-label="Next month"><ChevronRight size={18} /></button>
+      <div className="flex items-center justify-between my-2 mb-[18px] flex-wrap gap-3">
+        <h1 className="text-[28px] font-extrabold m-0">{MONTHS[m]} {year}</h1>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setMonth(new Date(year, m - 1, 1))} aria-label="Previous month" className="w-[38px] h-[38px] border border-line-strong rounded-[10px] grid place-items-center text-ink transition-colors duration-150 hover:bg-tint"><ChevronLeft size={18} /></button>
+          <button onClick={() => setMonth(new Date())} className="w-auto px-4 font-semibold text-sm py-2 px-4 rounded-[10px] border border-line-strong bg-white transition-colors duration-150 hover:bg-tint">Today</button>
+          <button onClick={() => setMonth(new Date(year, m + 1, 1))} aria-label="Next month" className="w-[38px] h-[38px] border border-line-strong rounded-[10px] grid place-items-center text-ink transition-colors duration-150 hover:bg-tint"><ChevronRight size={18} /></button>
         </div>
       </div>
-      <div className="cal-grid">
-        {DOW.map((d) => <div className="cal-dow" key={d}>{d}</div>)}
+      <div className="grid grid-cols-7 border border-line rounded overflow-hidden bg-line gap-px">
+        {DOW.map((d) => <div key={d} className="bg-white p-2.5 text-center text-xs font-bold text-ink-soft uppercase tracking-[0.04em]">{d}</div>)}
         {cells.map((d, i) => {
-          if (d === null) return <div className="cal-cell empty" key={'e' + i} />
+          if (d === null) return <div className="bg-[#fcfbfd] min-h-[104px] p-2" key={'e' + i} />
           const ds = toYMD(new Date(year, m, d))
           const items = byDate[ds] || []
           return (
-            <div className={'cal-cell' + (ds === todayStr ? ' is-today' : '')} key={ds}>
-              <span className="cal-day">{d}</span>
+            <div className={`bg-white min-h-[104px] p-2 flex flex-col gap-1 ${ds === todayStr ? 'bg-tint' : ''}`} key={ds}>
+              <span className={`text-[13px] font-semibold w-6 h-6 grid place-items-center rounded-full ${ds === todayStr ? 'bg-brand text-white' : ''}`}>{d}</span>
               {items.slice(0, 3).map((r) => (
-                <Link to={`/venue/${r.venue_id}`} key={r.id} className={'cal-event status-' + r.status} title={`${r.venue_name} · ${r.status}`}>
+                <Link to={`/venue/${r.venue_id}`} key={r.id} className={`text-[11px] font-semibold py-[3px] px-[7px] rounded-md whitespace-nowrap overflow-hidden text-ellipsis text-white ${r.status === 'requested' ? 'bg-[#e0a32e]' : 'bg-brand'}`} title={`${r.venue_name} · ${r.status}`}>
                   {r.venue_name}
                 </Link>
               ))}
-              {items.length > 3 && <span className="cal-more">+{items.length - 3} more</span>}
+              {items.length > 3 && <span className="text-[11px] text-ink-soft pl-0.5">+{items.length - 3} more</span>}
             </div>
           )
         })}
       </div>
-      <div className="cal-legend">
-        <span><i className="dot status-requested" /> Requested</span>
-        <span><i className="dot status-confirmed" /> Confirmed</span>
+      <div className="flex gap-5 mt-3.5 text-[13px] text-ink-soft">
+        <span className="inline-flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-full inline-block bg-[#e0a32e]" /> Requested</span>
+        <span className="inline-flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-full inline-block bg-brand" /> Confirmed</span>
       </div>
     </>
   )

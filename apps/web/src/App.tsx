@@ -72,7 +72,7 @@ function RouteTitle() {
 }
 
 const Loading = () => (
-  <div style={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-soft)' }}>
+  <div className="min-h-[50vh] flex items-center justify-center text-ink-soft">
     Loading…
   </div>
 )
@@ -81,6 +81,7 @@ export default function App() {
   const { pathname } = useLocation()
   return (
     <>
+      <div className="noise-overlay" aria-hidden="true" />
       <RouteTitle />
       <ScrollToTop />
       <Header />

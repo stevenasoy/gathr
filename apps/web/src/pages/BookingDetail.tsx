@@ -101,16 +101,18 @@ export default function BookingDetail() {
   }
 
   if (authLoading || loading) {
-    return <main className="auth-page"><p style={{ color: 'var(--ink-soft)' }}>Loading…</p></main>
+    return <main className="min-h-[70vh] grid place-items-center py-[60px] px-5"><p className="text-ink-soft">Loading…</p></main>
   }
   if (!user) {
     return (
       <>
-        <main className="auth-page"><div className="form-card">
-          <h1>Booking</h1>
-          <p className="form-sub">Sign in to view this booking.</p>
-          <Link to="/signin" state={{ from: `/bookings/${id}` }} className="btn-primary" style={{ display: 'block', textAlign: 'center' }}>Sign in</Link>
-        </div></main>
+        <main className="min-h-[70vh] grid place-items-center py-[60px] px-5">
+          <div className="max-w-[460px] mx-auto p-8 border border-line rounded-lg bg-white shadow-card">
+            <h1 className="text-[26px] font-extrabold mb-2 text-center">Booking</h1>
+            <p className="text-center text-ink-soft text-[14.5px] mb-6">Sign in to view this booking.</p>
+            <Link to="/signin" state={{ from: `/bookings/${id}` }} className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]" style={{ display: 'block', textAlign: 'center' }}>Sign in</Link>
+          </div>
+        </main>
         <Footer />
       </>
     )
@@ -118,9 +120,9 @@ export default function BookingDetail() {
   if (loadError) {
     return (
       <>
-        <main className="wrap empty" style={{ paddingTop: 80 }}>
-          <h3>{loadError}</h3>
-          <button className="btn-primary" style={{ width: 'auto', padding: '12px 22px', marginTop: 12 }} onClick={() => location.reload()}>Retry</button>
+        <main className="max-w-wrap mx-auto px-10 text-center py-20 px-5 text-ink-soft" style={{ paddingTop: 80 }}>
+          <h3 className="text-xl text-ink mb-2">{loadError}</h3>
+          <button className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]" style={{ width: 'auto', padding: '12px 22px', marginTop: 12 }} onClick={() => location.reload()}>Retry</button>
         </main>
         <Footer />
       </>
@@ -129,9 +131,9 @@ export default function BookingDetail() {
   if (notFound || !b) {
     return (
       <>
-        <main className="wrap empty" style={{ paddingTop: 80 }}>
-          <h3>Booking not found</h3>
-          <Link to="/bookings" className="btn-clear">Back to your bookings</Link>
+        <main className="max-w-wrap mx-auto px-10 text-center py-20 px-5 text-ink-soft" style={{ paddingTop: 80 }}>
+          <h3 className="text-xl text-ink mb-2">Booking not found</h3>
+          <Link to="/bookings" className="font-semibold text-[13px] text-brand hover:underline">Back to your bookings</Link>
         </main>
         <Footer />
       </>
@@ -175,20 +177,20 @@ export default function BookingDetail() {
 
   return (
     <>
-      <main className="wrap" style={{ maxWidth: 720, paddingTop: 26, paddingBottom: 40 }}>
-        <Link to={backTo} className="back-link"><ChevronLeft size={18} /> {isGatherer ? 'Your bookings' : 'Dashboard'}</Link>
+      <main className="max-w-wrap mx-auto px-10" style={{ maxWidth: 720, paddingTop: 26, paddingBottom: 40 }}>
+        <Link to={backTo} className="inline-flex items-center gap-1.5 text-ink-soft font-semibold text-sm mb-4 hover:text-ink"><ChevronLeft size={18} /> {isGatherer ? 'Your bookings' : 'Dashboard'}</Link>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+        <div className="flex justify-between items-start gap-3 flex-wrap mb-4">
           <div>
-            <h1 style={{ fontSize: 28, fontWeight: 800 }}>{b.venue_name}</h1>
-            <p style={{ color: 'var(--ink-soft)', marginTop: 4 }}>{isGatherer ? 'Your booking request' : 'Booking request for your venue'}</p>
+            <h1 className="text-[28px] font-extrabold">{b.venue_name}</h1>
+            <p className="text-ink-soft mt-1">{isGatherer ? 'Your booking request' : 'Booking request for your venue'}</p>
           </div>
-          <span className={'status-pill status-' + b.status} style={{ fontSize: 13 }}>{b.status}</span>
+          <span className={`text-[11px] font-bold uppercase tracking-[0.04em] py-1 px-2 rounded-full ${b.status === 'requested' ? 'bg-[#fef3e2] text-[#9a6700]' : b.status === 'confirmed' ? 'bg-[#e6f6ec] text-[#137a3c]' : 'bg-tint text-ink-soft'}`} style={{ fontSize: 13 }}>{b.status}</span>
         </div>
 
         {images.length > 0 && (
-          <Link to={`/venue/${b.venue_id}`} className="booking-photos" aria-label="View venue">
-            <div className="booking-photo-main" style={{ aspectRatio: '3/2' }}>
+          <Link to={`/venue/${b.venue_id}`} className="block mt-5" aria-label="View venue">
+            <div className="aspect-[2.2/1] rounded-lg overflow-hidden bg-gradient" style={{ aspectRatio: '3/2' }}>
               <img
                 src={withWidth(images[0], 1200)}
                 alt={b.venue_name}
@@ -199,11 +201,11 @@ export default function BookingDetail() {
                 sizes={gallerySizes}
                 srcSet={srcSet(images[0], [400, 800, 1200])}
                 onError={(e) => { e.currentTarget.style.display = 'none' }}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                className="w-full h-full object-cover transition-[filter] duration-150 hover:brightness-95"
               />
             </div>
             {images.length > 1 && (
-              <div className="booking-photo-thumbs">
+              <div className="grid grid-cols-3 gap-2 mt-2">
                 {images.slice(1, 4).map((src, i) => (
                   <div key={i} style={{ aspectRatio: '3/2' }}>
                     <img
@@ -215,7 +217,7 @@ export default function BookingDetail() {
                       height={267}
                       srcSet={srcSet(src, [400, 600])}
                       onError={(e) => { e.currentTarget.style.display = 'none' }}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      className="w-full h-full object-cover rounded-[10px] bg-tint"
                     />
                   </div>
                 ))}
@@ -224,81 +226,81 @@ export default function BookingDetail() {
           </Link>
         )}
 
-        <div className="detail-card" style={{ marginTop: 22 }}>
-          <div className="detail-line"><CalendarCheck size={18} /><span><b>Date</b><br />{fmtDate(b.event_date, 'long')}</span></div>
-          {b.event_type && <div className="detail-line"><MapPin size={18} /><span><b>Event</b><br />{b.event_type}</span></div>}
-          <div className="detail-line"><Clock size={18} /><span><b>Duration</b><br />{b.hours} hours</span></div>
-          {b.guests != null && <div className="detail-line"><Users size={18} /><span><b>Guests</b><br />{b.guests}</span></div>}
-          {b.note && <div className="detail-line"><StickyNote size={18} /><span><b>Special requests</b><br />{b.note}</span></div>}
+        <div className="border border-line rounded-lg bg-white mt-[22px]">
+          <div className="flex gap-3 py-4 px-[18px] border-b border-line text-[14.5px]"><CalendarCheck size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Date</b><span className="font-mono">{fmtDate(b.event_date, 'long')}</span></span></div>
+          {b.event_type && <div className="flex gap-3 py-4 px-[18px] border-b border-line text-[14.5px]"><MapPin size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Event</b>{b.event_type}</span></div>}
+          <div className="flex gap-3 py-4 px-[18px] border-b border-line text-[14.5px]"><Clock size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Duration</b><span className="font-mono">{b.hours}</span> hours</span></div>
+          {b.guests != null && <div className="flex gap-3 py-4 px-[18px] border-b border-line text-[14.5px]"><Users size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Guests</b><span className="font-mono">{b.guests}</span></span></div>}
+          {b.note && <div className="flex gap-3 py-4 px-[18px] text-[14.5px]"><StickyNote size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Special requests</b>{b.note}</span></div>}
         </div>
 
-        <div className="booking-breakdown" style={{ marginTop: 20, maxWidth: 360 }}>
-          <div className="total"><span>Total</span><span>{peso(b.total_php)}</span></div>
-          <p className="dash-muted" style={{ fontSize: 12, marginTop: 6 }}>Includes Gathr's 10% service fee. {isGatherer ? 'No charge until the Host confirms.' : ''}</p>
+        <div className="mt-5 text-sm max-w-[360px]">
+          <div className="flex justify-between pt-3.5 mt-1.5 border-t border-line font-bold text-ink"><span>Total</span><span className="font-mono">{peso(b.total_php)}</span></div>
+          <p className="text-ink-soft text-xs mt-1.5">Includes Gathr's 10% service fee. {isGatherer ? 'No charge until the Host confirms.' : ''}</p>
         </div>
 
-        <p className="dash-muted" style={{ fontSize: 13, marginTop: 14 }}>Requested {fmtWhen(b.created_at)}</p>
+        <p className="text-ink-soft text-[13px] mt-3.5">Requested <span className="font-mono">{fmtWhen(b.created_at)}</span></p>
 
-        {error && <div className="form-error" style={{ marginTop: 14 }}>{error}</div>}
+        {error && <div className="bg-[#fdecef] border border-[#f5c2cd] text-[#a01230] text-[13.5px] p-2.5 px-3.5 rounded-[10px] mt-3.5">{error}</div>}
 
-        <div className="cta-row" style={{ marginTop: 22, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Link to={messageTo} className="btn-ghost" style={{ width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <div className="inline-flex gap-2.5 flex-wrap mt-[22px]">
+          <Link to={messageTo} className="py-2 px-3.5 rounded-xl border border-line-strong bg-white font-semibold text-[15px] text-ink transition-colors duration-150 hover:bg-tint inline-flex items-center gap-2">
             <MessageSquare size={16} /> Message {isGatherer ? 'the Host' : 'the Gatherer'}
           </Link>
-          <Link to={`/venue/${b.venue_id}`} className="btn-ghost" style={{ width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <Link to={`/venue/${b.venue_id}`} className="py-2 px-3.5 rounded-xl border border-line-strong bg-white font-semibold text-[15px] text-ink transition-colors duration-150 hover:bg-tint inline-flex items-center gap-2">
             <ExternalLink size={16} /> View venue
           </Link>
 
           {/* Gatherer can cancel only while pending */}
           {isGatherer && b.status === 'requested' && (
-            <button onClick={onCancel} disabled={busy} className="btn-ghost" style={{ width: 'auto', color: '#a01230', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={onCancel} disabled={busy} className="py-2 px-3.5 rounded-xl border border-line-strong bg-white font-semibold text-[15px] transition-colors duration-150 hover:bg-tint inline-flex items-center gap-2" style={{ color: '#a01230' }}>
               <X size={16} /> Cancel request
             </button>
           )}
           {/* Host confirms / declines while pending */}
           {!isGatherer && b.status === 'requested' && (
             <>
-              <button onClick={() => onStatus('confirmed')} disabled={busy} className="btn-primary" style={{ width: 'auto', padding: '12px 20px', display: 'inline-flex', alignItems: 'center', gap: 7 }}><Check size={16} /> Confirm</button>
-              <button onClick={() => onStatus('cancelled')} disabled={busy} className="btn-ghost" style={{ width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 7 }}><X size={16} /> Decline</button>
+              <button onClick={() => onStatus('confirmed')} disabled={busy} className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed" style={{ width: 'auto', padding: '12px 20px', display: 'inline-flex' }}><Check size={16} /> Confirm</button>
+              <button onClick={() => onStatus('cancelled')} disabled={busy} className="py-2 px-3.5 rounded-xl border border-line-strong bg-white font-semibold text-[15px] text-ink transition-colors duration-150 hover:bg-tint inline-flex items-center gap-2"><X size={16} /> Decline</button>
             </>
           )}
         </div>
 
         {/* Review block: Gatherer side, after the event happened */}
         {isGatherer && completed && (
-          <div className="review-block">
+          <div className="mt-[34px] pt-[26px] border-t border-line">
             {myReview ? (
               <>
-                <h2>Your review</h2>
-                <div className="review your-review">
-                  <div className="review-head">
-                    <div className="review-av">{(myReview.author_name || 'G')[0].toUpperCase()}</div>
+                <h2 className="text-[21px] mb-1">Your review</h2>
+                <div className="max-w-[560px] border border-line rounded-[14px] p-4 bg-white">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-tint text-brand grid place-items-center font-bold">{(myReview.author_name || 'G')[0].toUpperCase()}</div>
                     <div>
                       <b>{myReview.author_name}</b>
-                      <div className="when">{new Date(myReview.created_at).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</div>
+                      <div className="text-ink-faint text-[13px]">{new Date(myReview.created_at).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</div>
                     </div>
                     <Stars rating={myReview.rating} />
                   </div>
-                  {myReview.body && <p>{myReview.body}</p>}
+                  {myReview.body && <p className="mt-2.5 text-ink-soft text-[14.5px]">{myReview.body}</p>}
                 </div>
-                <p className="dash-muted" style={{ fontSize: 13, marginTop: 10 }}>
-                  Your review is live on <Link to={`/venue/${b.venue_id}`} style={{ color: 'var(--brand)', fontWeight: 600 }}>the venue's page</Link>.
+                <p className="text-ink-soft text-[13px] mt-2.5">
+                  Your review is live on <Link to={`/venue/${b.venue_id}`} className="text-brand font-semibold">the venue's page</Link>.
                 </p>
               </>
             ) : (
               <>
-                <h2>How was {b.venue_name}?</h2>
-                <p className="dash-muted" style={{ marginTop: 4, marginBottom: 14 }}>Your review helps other Gatherers pick the right space.</p>
+                <h2 className="text-[21px] mb-1">How was {b.venue_name}?</h2>
+                <p className="text-ink-soft mt-1 mb-3.5">Your review helps other Gatherers pick the right space.</p>
                 <StarPicker value={rating} onChange={setRating} />
                 <textarea
-                  className="review-input"
+                  className="w-full max-w-[560px] min-h-[110px] mt-3.5 border border-line-strong rounded-xl p-3 font-[inherit] text-[14.5px] resize-y outline-2 outline-brand -outline-offset-1"
                   value={reviewBody}
                   onChange={(e) => setReviewBody(e.target.value)}
                   maxLength={600}
                   placeholder="What worked, what didn't, what should the next Gatherer know?"
                 />
-                {reviewErr && <div className="form-error" style={{ marginTop: 10 }}>{reviewErr}</div>}
-                <button className="btn-primary" onClick={submitReview} disabled={reviewBusy} style={{ width: 'auto', padding: '12px 22px', marginTop: 12 }}>
+                {reviewErr && <div className="bg-[#fdecef] border border-[#f5c2cd] text-[#a01230] text-[13.5px] p-2.5 px-3.5 rounded-[10px] mt-2.5">{reviewErr}</div>}
+                <button className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed" onClick={submitReview} disabled={reviewBusy} style={{ width: 'auto', padding: '12px 22px', marginTop: 12 }}>
                   {reviewBusy ? 'Posting…' : 'Post review'}
                 </button>
               </>

@@ -79,16 +79,18 @@ export default function HostEdit() {
     setList(list.includes(val) ? list.filter((x) => x !== val) : [...list, val])
 
   if (authLoading || loading) {
-    return <main className="auth-page"><p style={{ color: 'var(--ink-soft)' }}>Loading…</p></main>
+    return <main className="min-h-[70vh] grid place-items-center py-[60px] px-5"><p className="text-ink-soft">Loading…</p></main>
   }
   if (!user) {
     return (
       <>
-        <main className="auth-page"><div className="form-card">
-          <h1>Edit listing</h1>
-          <p className="form-sub">Sign in to manage your listings.</p>
-          <Link to="/signin" state={{ from: `/host/edit/${id}` }} className="btn-primary" style={{ display: 'block', textAlign: 'center' }}>Sign in</Link>
-        </div></main>
+        <main className="min-h-[70vh] grid place-items-center py-[60px] px-5">
+          <div className="max-w-[460px] mx-auto p-8 border border-line rounded-lg bg-white shadow-card">
+            <h1 className="text-[26px] font-extrabold mb-2 text-center">Edit listing</h1>
+            <p className="text-center text-ink-soft text-[14.5px] mb-6">Sign in to manage your listings.</p>
+            <Link to="/signin" state={{ from: `/host/edit/${id}` }} className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]" style={{ display: 'block', textAlign: 'center' }}>Sign in</Link>
+          </div>
+        </main>
         <Footer />
       </>
     )
@@ -96,9 +98,9 @@ export default function HostEdit() {
   if (loadError) {
     return (
       <>
-        <main className="wrap empty" style={{ paddingTop: 80 }}>
-          <h3>{loadError}</h3>
-          <button className="btn-primary" style={{ width: 'auto', padding: '12px 22px', marginTop: 12 }} onClick={() => location.reload()}>Retry</button>
+        <main className="max-w-wrap mx-auto px-10 text-center py-20 px-5 text-ink-soft" style={{ paddingTop: 80 }}>
+          <h3 className="text-xl text-ink mb-2">{loadError}</h3>
+          <button className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]" style={{ width: 'auto', padding: '12px 22px', marginTop: 12 }} onClick={() => location.reload()}>Retry</button>
         </main>
         <Footer />
       </>
@@ -107,9 +109,9 @@ export default function HostEdit() {
   if (notFound || !form) {
     return (
       <>
-        <main className="wrap empty" style={{ paddingTop: 80 }}>
-          <h3>Listing not found</h3>
-          <Link to="/host/dashboard?tab=listings" className="btn-clear">Back to your listings</Link>
+        <main className="max-w-wrap mx-auto px-10 text-center py-20 px-5 text-ink-soft" style={{ paddingTop: 80 }}>
+          <h3 className="text-xl text-ink mb-2">Listing not found</h3>
+          <Link to="/host/dashboard?tab=listings" className="font-semibold text-[13px] text-brand hover:underline">Back to your listings</Link>
         </main>
         <Footer />
       </>
@@ -153,77 +155,80 @@ export default function HostEdit() {
 
   return (
     <>
-      <main className="wrap" style={{ maxWidth: 720, paddingTop: 28, paddingBottom: 40 }}>
-        <Link to="/host/dashboard?tab=listings" className="back-link"><ChevronLeft size={18} /> Your listings</Link>
-        <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>Edit listing</h1>
-        <p style={{ color: 'var(--ink-soft)', marginBottom: 26 }}>Changes go live as soon as you save.</p>
+      <main className="max-w-wrap mx-auto px-10" style={{ maxWidth: 720, paddingTop: 28, paddingBottom: 40 }}>
+        <Link to="/host/dashboard?tab=listings" className="inline-flex items-center gap-1.5 text-ink-soft font-semibold text-sm mb-4 hover:text-ink"><ChevronLeft size={18} /> Your listings</Link>
+        <h1 className="text-[28px] font-extrabold mb-1">Edit listing</h1>
+        <p className="text-ink-soft mb-6">Changes go live as soon as you save.</p>
 
         <form onSubmit={onSubmit}>
-          <div className="form-row">
-            <label>Venue name</label>
-            <input required value={form.name} onChange={set('name')} />
+          <div className="mb-3.5">
+            <label className="block text-[13px] font-bold mb-1.5 text-ink">Venue name</label>
+            <input required value={form.name} onChange={set('name')} className="w-full py-3 px-3.5 border border-line-strong rounded-xl font-[inherit] text-sm bg-white text-ink outline-none focus:border-brand" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div className="form-row"><label>City</label><input required value={form.city} onChange={set('city')} /></div>
-            <div className="form-row"><label>Area / district</label><input value={form.area} onChange={set('area')} /></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mb-3.5"><label className="block text-[13px] font-bold mb-1.5 text-ink">City</label><input required value={form.city} onChange={set('city')} className="w-full py-3 px-3.5 border border-line-strong rounded-xl font-[inherit] text-sm bg-white text-ink outline-none focus:border-brand" /></div>
+            <div className="mb-3.5"><label className="block text-[13px] font-bold mb-1.5 text-ink">Area / district</label><input value={form.area} onChange={set('area')} className="w-full py-3 px-3.5 border border-line-strong rounded-xl font-[inherit] text-sm bg-white text-ink outline-none focus:border-brand" /></div>
           </div>
-          <div className="form-row">
-            <label>Event types</label>
-            <div className="chiprow">
+          <div className="mb-3.5">
+            <label className="block text-[13px] font-bold mb-1.5 text-ink">Event types</label>
+            <div className="flex flex-wrap gap-2">
               {TYPE_OPTIONS.map((c) => (
-                <button type="button" key={c.id} className={'chip' + (types.includes(c.id) ? ' on' : '')} onClick={() => toggle(types, setTypes, c.id)}>{c.label}</button>
+                <button type="button" key={c.id} className={`py-2 px-3.5 border rounded-full text-[13px] font-semibold transition-all duration-150 ${types.includes(c.id) ? 'bg-ink text-white border-ink' : 'border-line-strong text-ink-soft hover:border-ink hover:text-ink'}`} onClick={() => toggle(types, setTypes, c.id)}>{c.label}</button>
               ))}
             </div>
           </div>
-          <div className="form-row">
-            <label>How you charge</label>
-            <div className="chiprow">
+          <div className="mb-3.5">
+            <label className="block text-[13px] font-bold mb-1.5 text-ink">How you charge</label>
+            <div className="flex flex-wrap gap-2">
               {([['hour', 'Per hour'], ['head', 'Per head'], ['event', 'Per event (flat)']] as [PriceUnit, string][]).map(([val, label]) => (
-                <button type="button" key={val} className={'chip' + (form.priceUnit === val ? ' on' : '')} onClick={() => setForm({ ...form, priceUnit: val })}>{label}</button>
+                <button type="button" key={val} className={`py-2 px-3.5 border rounded-full text-[13px] font-semibold transition-all duration-150 ${form.priceUnit === val ? 'bg-ink text-white border-ink' : 'border-line-strong text-ink-soft hover:border-ink hover:text-ink'}`} onClick={() => setForm({ ...form, priceUnit: val })}>{label}</button>
               ))}
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div className="form-row"><label>Max capacity</label><input type="number" min="1" value={form.capacity} onChange={set('capacity')} /></div>
-            <div className="form-row"><label>Price (₱ / {unitWord(form.priceUnit)})</label><input type="number" min="0" step="100" value={form.pricePerHour} onChange={set('pricePerHour')} /></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mb-3.5"><label className="block text-[13px] font-bold mb-1.5 text-ink">Max capacity</label><input type="number" min="1" value={form.capacity} onChange={set('capacity')} className="w-full py-3 px-3.5 border border-line-strong rounded-xl font-[inherit] text-sm bg-white text-ink outline-none focus:border-brand" /></div>
+            <div className="mb-3.5"><label className="block text-[13px] font-bold mb-1.5 text-ink">Price (₱ / {unitWord(form.priceUnit)})</label><input type="number" min="0" step="100" value={form.pricePerHour} onChange={set('pricePerHour')} className="w-full py-3 px-3.5 border border-line-strong rounded-xl font-[inherit] text-sm bg-white text-ink outline-none focus:border-brand" /></div>
           </div>
           {form.priceUnit !== 'hour' && (
-            <div className="form-row" style={{ maxWidth: 280 }}>
-              <label>Hours included <span style={{ fontWeight: 400, color: 'var(--ink-faint)' }}>(optional)</span></label>
-              <input type="number" min="1" max="24" value={form.includedHours} onChange={set('includedHours')} placeholder="e.g. 4" />
+            <div className="mb-3.5 max-w-[280px]">
+              <label className="block text-[13px] font-bold mb-1.5 text-ink">Hours included <span className="font-normal text-ink-faint">(optional)</span></label>
+              <input type="number" min="1" max="24" value={form.includedHours} onChange={set('includedHours')} placeholder="e.g. 4" className="w-full py-3 px-3.5 border border-line-strong rounded-xl font-[inherit] text-sm bg-white text-ink outline-none focus:border-brand" />
             </div>
           )}
-          <div className="form-row"><label>Description</label><textarea value={form.blurb} onChange={set('blurb')} /></div>
-          <div className="form-row">
-            <label>Amenities</label>
-            <div className="chiprow">
+          <div className="mb-3.5">
+            <label className="block text-[13px] font-bold mb-1.5 text-ink">Description</label>
+            <textarea value={form.blurb} onChange={set('blurb')} className="w-full py-3 px-3.5 border border-line-strong rounded-xl font-[inherit] text-sm bg-white text-ink outline-none focus:border-brand resize-y min-h-[110px]" />
+          </div>
+          <div className="mb-3.5">
+            <label className="block text-[13px] font-bold mb-1.5 text-ink">Amenities</label>
+            <div className="flex flex-wrap gap-2">
               {AMENITIES.map((a) => (
-                <button type="button" key={a} className={'chip' + (amenities.includes(a) ? ' on' : '')} onClick={() => toggle(amenities, setAmenities, a)}>{a}</button>
+                <button type="button" key={a} className={`py-2 px-3.5 border rounded-full text-[13px] font-semibold transition-all duration-150 ${amenities.includes(a) ? 'bg-ink text-white border-ink' : 'border-line-strong text-ink-soft hover:border-ink hover:text-ink'}`} onClick={() => toggle(amenities, setAmenities, a)}>{a}</button>
               ))}
             </div>
           </div>
-          <div className="form-row">
-            <label>Photos</label>
+          <div className="mb-3.5">
+            <label className="block text-[13px] font-bold mb-1.5 text-ink">Photos</label>
             <PhotoManager photos={photos} onChange={setPhotos} userId={user.id} />
           </div>
-          <div className="form-row">
-            <label>Listing as</label>
-            <div className="chiprow">
-              <button type="button" className={'chip' + (form.hostType === 'individual' ? ' on' : '')} onClick={() => setForm({ ...form, hostType: 'individual' })}>
-                <User size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> An individual
+          <div className="mb-3.5">
+            <label className="block text-[13px] font-bold mb-1.5 text-ink">Listing as</label>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className={`inline-flex items-center gap-1 py-2 px-3.5 border rounded-full text-[13px] font-semibold transition-all duration-150 ${form.hostType === 'individual' ? 'bg-ink text-white border-ink' : 'border-line-strong text-ink-soft hover:border-ink hover:text-ink'}`} onClick={() => setForm({ ...form, hostType: 'individual' })}>
+                <User size={14} className="align-[-2px] mr-1" /> An individual
               </button>
-              <button type="button" className={'chip' + (form.hostType === 'business' ? ' on' : '')} onClick={() => setForm({ ...form, hostType: 'business' })}>
-                <Building2 size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> A business
+              <button type="button" className={`inline-flex items-center gap-1 py-2 px-3.5 border rounded-full text-[13px] font-semibold transition-all duration-150 ${form.hostType === 'business' ? 'bg-ink text-white border-ink' : 'border-line-strong text-ink-soft hover:border-ink hover:text-ink'}`} onClick={() => setForm({ ...form, hostType: 'business' })}>
+                <Building2 size={14} className="align-[-2px] mr-1" /> A business
               </button>
             </div>
           </div>
           {form.hostType === 'business' ? (
-            <div className="form-row"><label>Business name</label><input value={form.businessName} onChange={set('businessName')} placeholder="Skyline Events Co." /></div>
+            <div className="mb-3.5"><label className="block text-[13px] font-bold mb-1.5 text-ink">Business name</label><input value={form.businessName} onChange={set('businessName')} placeholder="Skyline Events Co." className="w-full py-3 px-3.5 border border-line-strong rounded-xl font-[inherit] text-sm bg-white text-ink outline-none focus:border-brand" /></div>
           ) : (
-            <p className="dash-muted" style={{ marginTop: -4, marginBottom: 14 }}>Guests will see <b style={{ color: 'var(--ink)' }}>{displayName}</b> as the host.</p>
+            <p className="text-ink-soft text-[15px] mt-[-4px] mb-3.5">Guests will see <b className="text-ink">{displayName}</b> as the host.</p>
           )}
-          {error && <div className="form-error">{error}</div>}
-          <button className="btn-primary" type="submit" disabled={saving} style={{ marginTop: 8 }}>
+          {error && <div className="bg-[#fdecef] border border-[#f5c2cd] text-[#a01230] text-[13.5px] p-2.5 px-3.5 rounded-[10px] mb-3.5">{error}</div>}
+          <button className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed" type="submit" disabled={saving} style={{ marginTop: 8 }}>
             {saving ? 'Saving…' : 'Save changes'}
           </button>
         </form>

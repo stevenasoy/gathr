@@ -35,6 +35,8 @@ interface MessagesProps {
 
 const fmtDate = (d: string | null | undefined) => fmtDateBase(d ?? null, 'compact')
 
+const baseBtn = "w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+
 export default function Messages({ role = 'guest', embedded = false }: MessagesProps) {
   const { user, loading: authLoading } = useAuth()
   const [params] = useSearchParams()
@@ -169,96 +171,102 @@ export default function Messages({ role = 'guest', embedded = false }: MessagesP
     }
   }, [draft, active, user])
 
+  const statusClass = (status?: string) => {
+    if (status === 'confirmed') return 'bg-[#e6f6ec] text-[#137a3c]'
+    if (status === 'cancelled') return 'bg-tint text-ink-soft'
+    return 'bg-[#fef3e2] text-[#9a6700]'
+  }
+
   // Plain function (not a component) so the input doesn't remount and drop focus.
   const wrap = (children: ReactNode) => embedded ? children : <><main>{children}</main><Footer /></>
 
   if (!authLoading && !user) {
     return wrap(
       <>
-        {!embedded && <section className="page-hero"><div className="wrap"><span className="page-eyebrow">Messages</span><h1>Messages</h1></div></section>}
-        <div className="wrap page-body"><div className="empty-state">
-          <MessageSquare size={40} strokeWidth={1.5} />
-          <h2>Sign in to see your messages</h2>
-          <Link to="/signin" state={{ from: '/messages' }} className="btn-primary" style={{ width: 'auto', padding: '13px 22px', display: 'inline-block' }}>Sign in</Link>
+        {!embedded && <section className="py-14 pb-10 bg-surface border-b border-line text-center"><div className="wrap relative z-[1]"><span className="inline-block text-xs font-bold tracking-[0.14em] uppercase text-brand mb-3">Messages</span><h1 className="text-[clamp(30px,4vw,44px)] font-extrabold max-w-[760px] mx-auto leading-[1.1]">Messages</h1></div></section>}
+        <div className="wrap page-body"><div className="text-center py-[60px] px-5">
+          <MessageSquare size={40} strokeWidth={1.5} className="text-ink-faint mb-3.5 mx-auto" />
+          <h2 className="text-[22px] font-extrabold mb-2">Sign in to see your messages</h2>
+          <Link to="/signin" state={{ from: '/messages' }} className={baseBtn} style={{ width: 'auto', padding: '13px 22px', display: 'inline-block' }}>Sign in</Link>
         </div></div>
       </>
     )
   }
 
   const inbox = (
-    <div className="msg-layout">
-      <aside className="msg-threads">
+    <div className="grid grid-cols-[300px_1fr] gap-0 border border-line rounded-lg overflow-hidden h-[560px] bg-white">
+      <aside className="border-r border-line overflow-y-auto">
         {error ? (
-          <div className="dash-muted" style={{ padding: 16 }}>
+          <div className="text-ink-soft text-[15px]" style={{ padding: 16 }}>
             <p style={{ marginBottom: 10 }}>{error}</p>
-            <button className="btn-primary" style={{ width: 'auto', padding: '10px 18px' }} onClick={() => location.reload()}>Retry</button>
+            <button className={baseBtn} style={{ width: 'auto', padding: '10px 18px' }} onClick={() => location.reload()}>Retry</button>
           </div>
         ) : loading ? (
-          <p className="dash-muted" style={{ padding: 16 }}>Loading…</p>
+          <p className="text-ink-soft text-[15px]" style={{ padding: 16 }}>Loading…</p>
         ) : threads.length === 0 ? (
-          <p className="dash-muted" style={{ padding: 16 }}>No conversations yet. {role === 'host' ? 'They start when a guest messages or requests one of your venues.' : 'Message a venue or request one to start a conversation.'}</p>
+          <p className="text-ink-soft text-[15px]" style={{ padding: 16 }}>No conversations yet. {role === 'host' ? 'They start when a guest messages or requests one of your venues.' : 'Message a venue or request one to start a conversation.'}</p>
         ) : threads.map((t) => {
           const last = latest[t.key]
           return (
-            <button key={t.key} className={'msg-thread' + (t.key === activeId ? ' on' : '')} onClick={() => setActiveId(t.key)}>
-              <div className="msg-thread-top">
-                <b>{t.venue_name}</b>
+            <button key={t.key} className={`flex flex-col gap-[3px] w-full text-left py-3.5 px-4 border-b border-line transition-colors duration-150 ${t.key === activeId ? 'bg-tint' : 'hover:bg-[#faf8fc]'}`} onClick={() => setActiveId(t.key)}>
+              <div className="flex items-center justify-between gap-2">
+                <b className="text-[14.5px]">{t.venue_name}</b>
                 {t.inquiry
-                  ? <span className="status-pill status-requested">Inquiry</span>
-                  : <span className={'status-pill status-' + t.status}>{t.status}</span>}
+                  ? <span className={`text-[11px] font-bold uppercase tracking-[0.04em] py-1 px-2 rounded-full ${statusClass('requested')}`}>Inquiry</span>
+                  : <span className={`text-[11px] font-bold uppercase tracking-[0.04em] py-1 px-2 rounded-full ${statusClass(t.status)}`}>{t.status}</span>}
               </div>
-              <span className="msg-thread-sub">{t.inquiry ? 'Pre-booking question' : fmtDate(t.event_date)}</span>
-              {last && <span className="msg-thread-preview">{last.body}</span>}
+              <span className="text-xs text-ink-soft">{t.inquiry ? 'Pre-booking question' : fmtDate(t.event_date)}</span>
+              {last && <span className="text-[13px] text-ink-faint whitespace-nowrap overflow-hidden text-ellipsis mt-0.5">{last.body}</span>}
             </button>
           )
         })}
       </aside>
 
-      <section className="msg-thread-view">
+      <section className="flex flex-col min-w-0">
         {!active ? (
-          <div className="empty-state" style={{ margin: 'auto' }}>
-            <MessageSquare size={36} strokeWidth={1.5} />
+          <div className="empty-state m-auto">
+            <MessageSquare size={36} strokeWidth={1.5} className="text-ink-faint mb-3.5 mx-auto" />
             <p>Select a conversation.</p>
           </div>
         ) : (
           <>
-            <div className="msg-head">
-              <Link to={`/venue/${active.venue_id}`} className="msg-head-title">{active.venue_name}</Link>
-              <span className="msg-head-sub">
+            <div className="py-4 px-5 border-b border-line">
+              <Link to={`/venue/${active.venue_id}`} className="font-bold text-base text-ink hover:text-brand">{active.venue_name}</Link>
+              <span className="block text-[13px] text-ink-soft mt-0.5">
                 {active.inquiry ? 'Inquiry · no booking yet' : `${fmtDate(active.event_date)} · ${active.hours} hrs${active.guests ? ` · ${active.guests} guests` : ''}`}
               </span>
             </div>
             {!active.inquiry && (
-              <Link to={`/bookings/${active.refId}`} className="msg-booking-summary">
-                <div className="msg-bs-top">
-                  <span className="msg-bs-label">Booking summary</span>
-                  <span className={'status-pill status-' + active.status}>{active.status}</span>
+              <Link to={`/bookings/${active.refId}`} className="block mx-5 mt-3.5 p-3.5 px-4 border border-line-strong rounded-[14px] bg-tint hover:border-brand">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.04em] text-ink-soft">Booking summary</span>
+                  <span className={`text-[11px] font-bold uppercase tracking-[0.04em] py-1 px-2 rounded-full ${statusClass(active.status)}`}>{active.status}</span>
                 </div>
-                <div className="msg-bs-grid">
+                <div className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-[13.5px] text-ink">
                   <span>{fmtDate(active.event_date)}</span>
                   <span>{active.hours} hrs</span>
                   {active.guests ? <span>{active.guests} guests</span> : null}
                   {active.event_type ? <span>{active.event_type}</span> : null}
                   <span><b>{peso(active.total_php)}</b></span>
                 </div>
-                {active.note && <div className="msg-bs-note">“{active.note}”</div>}
-                <span className="msg-bs-link">View booking details →</span>
+                {active.note && <div className="text-[13px] text-ink-soft italic mt-2">“{active.note}”</div>}
+                <span className="inline-block mt-2.5 text-[13px] font-semibold text-brand">View booking details →</span>
               </Link>
             )}
-            <div className="msg-body">
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2.5">
               {messages.length === 0
-                ? <p className="dash-muted" style={{ textAlign: 'center', margin: 'auto' }}>No messages yet. Say hello.</p>
+                ? <p className="text-ink-soft text-[15px] text-center m-auto">No messages yet. Say hello.</p>
                 : messages.map((m) => (
-                  <div key={m.id} className={'msg-bubble' + (m.sender_id === user?.id ? ' mine' : '')}>
-                    <p>{m.body}</p>
-                    <span className="msg-time">{fmtTime(m.created_at)}</span>
+                  <div key={m.id} className={`max-w-[72%] rounded-[14px] py-2.5 px-3.5 ${m.sender_id === user?.id ? 'self-end bg-brand text-white' : 'self-start bg-tint'}`}>
+                    <p className="m-0 text-[14.5px] leading-snug">{m.body}</p>
+                    <span className={`block text-[11px] opacity-65 mt-1 ${m.sender_id === user?.id ? 'text-white' : 'text-ink-soft'}`}>{fmtTime(m.created_at)}</span>
                   </div>
                 ))}
               <div ref={endRef} />
             </div>
-            <form className="msg-composer" onSubmit={send}>
-              <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a message…" />
-              <button className="btn-primary" type="submit" disabled={sending || !draft.trim()} aria-label="Send"><Send size={18} /></button>
+            <form className="flex gap-2 py-3.5 px-4 border-t border-line" onSubmit={send}>
+              <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a message…" className="flex-1 border border-line-strong rounded-full py-2.5 px-4 font-[inherit] text-sm outline-none focus:border-brand" />
+              <button className={`${baseBtn} w-auto px-4 grid place-items-center rounded-full`} type="submit" disabled={sending || !draft.trim()} aria-label="Send"><Send size={18} /></button>
             </form>
           </>
         )}
@@ -269,9 +277,9 @@ export default function Messages({ role = 'guest', embedded = false }: MessagesP
   return wrap(
     <>
       {!embedded && (
-        <section className="page-hero"><div className="wrap">
-          <span className="page-eyebrow">Messages</span>
-          <h1>Messages</h1>
+        <section className="py-14 pb-10 bg-surface border-b border-line text-center"><div className="wrap relative z-[1]">
+          <span className="inline-block text-xs font-bold tracking-[0.14em] uppercase text-brand mb-3">Messages</span>
+          <h1 className="text-[clamp(30px,4vw,44px)] font-extrabold max-w-[760px] mx-auto leading-[1.1]">Messages</h1>
         </div></section>
       )}
       <div className={embedded ? '' : 'wrap page-body'}>{inbox}</div>

@@ -158,13 +158,13 @@ export default function Venue() {
 
   if (!venue) {
     return (
-      <div className="wrap empty" style={{ paddingTop: 80 }}>
+      <div className="max-w-wrap mx-auto px-10 text-center py-20 px-5 text-ink-soft" style={{ paddingTop: 80 }}>
         {venuesLoading ? (
-          <h3>Loading venue…</h3>
+          <h3 className="text-xl text-ink mb-2">Loading venue…</h3>
         ) : (
           <>
-            <h3>Venue not found</h3>
-            <Link to="/search" className="btn-clear">Back to all venues</Link>
+            <h3 className="text-xl text-ink mb-2">Venue not found</h3>
+            <Link to="/search" className="font-semibold text-[13px] text-brand hover:underline">Back to all venues</Link>
           </>
         )}
       </div>
@@ -185,43 +185,51 @@ export default function Venue() {
   const hasReviews = shownCount > 0
   const relatedTitle = ownListing ? 'Your other listings' : 'Similar venues'
 
+  const galleryClass = `grid gap-2 rounded-lg overflow-hidden my-3 mb-7 bg-tint ${
+    venue.images.length === 1 ? 'grid-cols-1 aspect-[2.4/1]' :
+    venue.images.length === 2 ? 'grid-cols-2 aspect-[2.4/1]' :
+    venue.images.length === 3 ? 'grid-cols-[2fr_1fr] grid-rows-2 aspect-[2.4/1]' :
+    venue.images.length === 4 ? 'grid-cols-[2fr_1fr_1fr] grid-rows-[1.5fr_1fr] aspect-[2.4/1]' :
+    'grid-cols-[2fr_1fr_1fr] grid-rows-2 aspect-[2.4/1]'
+  }`
+
   return (
     <>
-      <main className="wrap detail">
+      <main className="max-w-wrap mx-auto px-10 pt-[26px]">
         {ownListing
-          ? <Link to="/host/dashboard?tab=listings" className="back-link"><ChevronLeft size={18} /> Your listings</Link>
-          : <Link to="/search" className="back-link"><ChevronLeft size={18} /> All venues</Link>}
+          ? <Link to="/host/dashboard?tab=listings" className="inline-flex items-center gap-1.5 text-ink-soft font-semibold text-sm mb-4 hover:text-ink"><ChevronLeft size={18} /> Your listings</Link>
+          : <Link to="/search" className="inline-flex items-center gap-1.5 text-ink-soft font-semibold text-sm mb-4 hover:text-ink"><ChevronLeft size={18} /> All venues</Link>}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
+        <div className="flex justify-between items-end gap-4 flex-wrap mb-4">
           <div>
-            <h1 className="detail-title">{venue.name}</h1>
-            <div className="detail-meta">
+            <h1 className="text-[30px] font-extrabold">{venue.name}</h1>
+            <div className="flex items-center gap-2 flex-wrap my-2.5 mb-[18px] text-sm text-ink-soft">
               {hasReviews ? (
                 <>
-                  <b><Star /> {shownRating}</b>
+                  <b className="text-ink font-semibold inline-flex items-center gap-1"><Star className="w-[15px] h-[15px] text-gold fill-gold" /> {shownRating}</b>
                   <span>({shownCount} review{shownCount > 1 ? 's' : ''})</span>
                 </>
               ) : (
-                <b>New on Gathr</b>
+                <b className="text-ink">New on Gathr</b>
               )}
-              <span className="dot">·</span>
-              <b style={{ color: 'var(--ink)' }}><MapPin size={15} style={{ color: 'var(--ink-soft)' }} /> {venue.area ? `${venue.area}, ` : ''}{venue.city}</b>
-              <span className="dot">·</span>
+              <span className="text-line-strong">·</span>
+              <b className="text-ink font-semibold inline-flex items-center gap-1"><MapPin size={15} className="text-ink-soft" /> {venue.area ? `${venue.area}, ` : ''}{venue.city}</b>
+              <span className="text-line-strong">·</span>
               <span>{typeLabels.join(' · ')}</span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 6, position: 'relative' }}>
-            <button onClick={onShare} className="host-link" style={{ display: 'inline-flex', gap: 7, alignItems: 'center' }}><Share size={16} /> Share</button>
-            <button onClick={onSave} className="host-link" style={{ display: 'inline-flex', gap: 7, alignItems: 'center', color: saved ? 'var(--brand-2)' : undefined }}>
-              <Heart size={16} fill={saved ? 'currentColor' : 'none'} /> {saved ? 'Saved' : 'Save'}
+          <div className="flex gap-1.5 relative">
+            <button onClick={onShare} className="py-2 px-3.5 rounded-xl border border-line-strong bg-white font-semibold text-[13.5px] text-ink transition-colors duration-150 hover:bg-tint inline-flex items-center gap-1.5"><Share size={16} /> Share</button>
+            <button onClick={onSave} className={`py-2 px-3.5 rounded-xl border border-line-strong bg-white font-semibold text-[13.5px] transition-colors duration-150 hover:bg-tint inline-flex items-center gap-1.5 ${saved ? 'text-brand' : 'text-ink'}`}>
+              <Heart size={16} fill={saved ? 'var(--brand)' : 'none'} /> {saved ? 'Saved' : 'Save'}
             </button>
-            {shareToast && <span className="toast">Link copied</span>}
+            {shareToast && <span className="absolute top-full right-0 mt-1.5 bg-ink text-white text-[13px] py-2 px-3.5 rounded-full shadow-pop whitespace-nowrap" style={{ animation: 'toast-in .25s ease-out' }}>Link copied</span>}
           </div>
         </div>
 
-        <div className="gallery">
+        <div className={galleryClass}>
           {venue.images.slice(0, 5).map((src, i) => (
-            <div className={'g-img' + (i === 0 ? ' g-main' : '')} key={i} style={{ aspectRatio: '3/2' }}>
+            <div key={i} className={`overflow-hidden ${i === 0 ? (venue.images.length <= 2 ? '' : 'row-span-2') : ''} ${venue.images.length === 4 && i === 1 ? 'col-span-2' : ''}`}>
               <img
                 src={withWidth(src, i === 0 ? 1200 : 600)}
                 alt={`${venue.name} ${i + 1}`}
@@ -233,83 +241,86 @@ export default function Venue() {
                 srcSet={srcSet(src, i === 0 ? [400, 800, 1200] : [400, 600])}
                 fetchPriority={i === 0 ? 'high' : undefined}
                 onError={(e) => { e.currentTarget.style.display = 'none' }}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                className="w-full h-full object-cover transition-[filter] duration-200 hover:brightness-[0.94]"
               />
             </div>
           ))}
         </div>
 
-        <div className="detail-body">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 lg:gap-[60px] py-[38px] items-start">
           <div>
-            <div className="detail-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div className="py-[26px] border-t border-line first:border-t-0 first:pt-0">
+              <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h2 style={{ marginBottom: 4 }}>Hosted by {venue.host.name}</h2>
-                  <span style={{ color: 'var(--ink-soft)', fontSize: 14 }}>
+                  <h2 className="text-xl font-bold mb-1">Hosted by {venue.host.name}</h2>
+                  <span className="text-ink-soft text-sm">
                     {venue.host.type === 'business' ? 'Business host' : 'Individual host'} · Since {venue.host.since}{venue.host.superhost ? ' · Superhost' : ''}
                   </span>
                 </div>
-                <div className="host-av">{venue.host.name[0]}</div>
+                <div className="w-[52px] h-[52px] rounded-full bg-gradient text-white grid place-items-center font-bold text-[19px]">{venue.host.name[0]}</div>
               </div>
-              <div className="feat-row">
-                <div className="feat"><Users /><b>{venue.capacity}</b><span>Max guests</span></div>
-                <div className="feat"><Clock /><b>{peso(venue.pricePerHour)}</b><span>Per {unitW}</span></div>
-                <div className="feat"><Star /><b>{hasReviews ? shownRating : 'New'}</b><span>{hasReviews ? `${shownCount} review${shownCount > 1 ? 's' : ''}` : 'No reviews yet'}</span></div>
+              <div className="flex gap-3.5 flex-wrap mb-[22px]">
+                <div className="flex-1 min-w-[150px] border border-line rounded-lg p-4"><Users className="text-brand w-[22px] h-[22px] mb-2" /><b className="block text-[18px] font-bold font-mono">{venue.capacity}</b><span className="text-[13px] text-ink-soft">Max guests</span></div>
+                <div className="flex-1 min-w-[150px] border border-line rounded-lg p-4"><Clock className="text-brand w-[22px] h-[22px] mb-2" /><b className="block text-[18px] font-bold font-mono">{peso(venue.pricePerHour)}</b><span className="text-[13px] text-ink-soft">Per {unitW}</span></div>
+                <div className="flex-1 min-w-[150px] border border-line rounded-lg p-4"><Star className="text-brand w-[22px] h-[22px] mb-2" /><b className="block text-[18px] font-bold font-mono">{hasReviews ? shownRating : 'New'}</b><span className="text-[13px] text-ink-soft">{hasReviews ? `${shownCount} review${shownCount > 1 ? 's' : ''}` : 'No reviews yet'}</span></div>
               </div>
-              <p className="detail-lead">{venue.blurb}</p>
-              <p className="detail-lead" style={{ marginTop: 14 }}>{venue.host.name}'s team is on-site the day of your event, so setup, timing, and turnover are handled while you focus on your guests.</p>
+              <p className="text-ink-soft text-base leading-relaxed">{venue.blurb}</p>
+              <p className="text-ink-soft text-base leading-relaxed mt-3.5">{venue.host.name}'s team is on-site the day of your event, so setup, timing, and turnover are handled while you focus on your guests.</p>
             </div>
 
-            <div className="detail-section">
-              <h2>What this space offers</h2>
-              <div className="amenity-grid">
+            <div className="py-[26px] border-t border-line">
+              <h2 className="text-xl font-bold mb-3.5">What this space offers</h2>
+              <div className="grid grid-cols-2 gap-x-5 gap-y-3.5">
                 {venue.amenities.map((a) => {
                   const Icon = amenityIcon(a)
-                  return <div className="item" key={a}><Icon strokeWidth={1.7} /> {a}</div>
+                  return <div key={a} className="flex items-center gap-3 text-[15px]"><Icon strokeWidth={1.7} className="text-brand w-5 h-5 shrink-0" /> {a}</div>
                 })}
               </div>
             </div>
 
-            <div className="detail-section">
+            <div className="py-[26px] border-t border-line">
               {realCount > 0 ? (
                 <>
-                  <h2><Star size={18} style={{ color: 'var(--gold)', fill: 'var(--gold)', verticalAlign: '-3px' }} /> {realAvg} · {realCount} review{realCount > 1 ? 's' : ''}</h2>
-                  <div className="reviews-grid">
+                  <h2 className="text-xl font-bold mb-3.5"><Star size={18} className="text-gold fill-gold inline-block align-[-3px]" /> <span className="font-mono">{realAvg}</span> · {realCount} review{realCount > 1 ? 's' : ''}</h2>
+                  <div className="grid grid-cols-2 gap-x-10 gap-6">
                     {realReviews.map((r) => (
-                      <div className="review" key={r.id}>
-                        <div className="review-head">
-                          <div className="review-av">{(r.author_name || 'G')[0].toUpperCase()}</div>
+                      <div key={r.id}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-tint text-brand grid place-items-center font-bold">{(r.author_name || 'G')[0].toUpperCase()}</div>
                           <div>
-                            <b>{r.author_name}</b>
-                            <div className="when">{new Date(r.created_at).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</div>
+                            <b className="text-[15px]">{r.author_name}</b>
+                            <div className="text-ink-faint text-[13px]">{new Date(r.created_at).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</div>
                           </div>
                           <Stars rating={r.rating} />
                         </div>
-                        {r.body && <p>{r.body}</p>}
+                        {r.body && <p className="text-ink-soft text-[14.5px] mt-2">{r.body}</p>}
                       </div>
                     ))}
                   </div>
                 </>
               ) : hasReviews ? (
                 <>
-                  <h2><Star size={18} style={{ color: 'var(--gold)', fill: 'var(--gold)', verticalAlign: '-3px' }} /> {shownRating} · {shownCount} reviews</h2>
-                  <p className="detail-lead" style={{ fontSize: 14, marginBottom: 18 }}>Sample reviews shown for this preview. Real guest reviews appear here once a venue has hosted events.</p>
-                  <div className="reviews-grid">
+                  <h2 className="text-xl font-bold mb-3.5"><Star size={18} className="text-gold fill-gold inline-block align-[-3px]" /> <span className="font-mono">{shownRating}</span> · {shownCount} reviews</h2>
+                  <p className="text-ink-soft text-sm mb-[18px]">Sample reviews shown for this preview. Real guest reviews appear here once a venue has hosted events.</p>
+                  <div className="grid grid-cols-2 gap-x-10 gap-6">
                     {REVIEWS.map((r) => (
-                      <div className="review" key={r.name}>
-                        <div className="review-head">
-                          <div className="review-av">{r.name[0]}</div>
-                          <div><b>{r.name}</b><div className="when">{r.when}</div></div>
+                      <div key={r.name}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-tint text-brand grid place-items-center font-bold">{r.name[0]}</div>
+                          <div>
+                            <b className="text-[15px]">{r.name}</b>
+                            <div className="text-ink-faint text-[13px]">{r.when}</div>
+                          </div>
                         </div>
-                        <p>{r.text}</p>
+                        <p className="text-ink-soft text-[14.5px] mt-2">{r.text}</p>
                       </div>
                     ))}
                   </div>
                 </>
               ) : (
                 <>
-                  <h2>Reviews</h2>
-                  <p className="detail-lead">No reviews yet. This is a new listing on Gathr, be one of the first to book it.</p>
+                  <h2 className="text-xl font-bold mb-3.5">Reviews</h2>
+                  <p className="text-ink-soft text-base leading-relaxed">No reviews yet. This is a new listing on Gathr, be one of the first to book it.</p>
                 </>
               )}
             </div>
@@ -317,84 +328,89 @@ export default function Venue() {
 
           {/* Booking card */}
           <aside>
-            <div className="booking">
-              <div className="booking-price">
-                <b>{peso(venue.pricePerHour)}</b><span>/ {unitW}{unit !== 'hour' && venue.includedHours ? ` · ${venue.includedHours} hrs` : ''}</span>
+            <div className="sticky top-24 border border-line-strong rounded-lg p-6 shadow-pop bg-white">
+              <div className="flex items-baseline gap-1.5 mb-4">
+                <b className="text-[26px] font-extrabold font-mono">{peso(venue.pricePerHour)}</b>
+                <span className="text-ink-soft text-[15px]">/ {unitW}{unit !== 'hour' && venue.includedHours ? ` · ${venue.includedHours} hrs` : ''}</span>
               </div>
 
-              <div className="booking-grid">
-                <div className="booking-row2">
-                  <div className="booking-field">
-                    <label>Date</label>
-                    <input type="date" min={todayStr} value={date} onChange={(e) => setDate(e.target.value)} />
+              <div className="border border-line-strong rounded-[14px] overflow-hidden mb-3.5">
+                <div className="grid grid-cols-2">
+                  <div className="py-[11px] px-3.5 border-b border-r border-line-strong">
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.04em]">Date</label>
+                    <input type="date" min={todayStr} value={date} onChange={(e) => setDate(e.target.value)} className="border-0 outline-0 w-full font-[inherit] text-sm bg-transparent text-ink appearance-none pt-0.5" />
                   </div>
-                  <div className="booking-field">
-                    <label>Event</label>
-                    <select value={eventType} onChange={(e) => setEventType(e.target.value)}>
+                  <div className="py-[11px] px-3.5 border-b border-line-strong">
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.04em]">Event</label>
+                    <select value={eventType} onChange={(e) => setEventType(e.target.value)} className="border-0 outline-0 w-full font-[inherit] text-sm bg-transparent text-ink appearance-none pt-0.5">
                       <option value="">Select</option>
                       {typeLabels.map((t) => <option key={t}>{t}</option>)}
                     </select>
                   </div>
                 </div>
-                <div className="booking-row2">
-                  <div className="booking-field">
-                    <label>{unit === 'hour' ? 'Hours' : lockedDuration ? 'Duration · set by host' : 'Duration (hrs)'}</label>
+                <div className="grid grid-cols-2">
+                  <div className="py-[11px] px-3.5 border-r border-line-strong">
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.04em]">{unit === 'hour' ? 'Hours' : lockedDuration ? 'Duration · set by host' : 'Duration (hrs)'}</label>
                     <input type="number" min="1" max="24" value={hours} disabled={lockedDuration}
                       onChange={(e) => setHours(Math.max(1, Number(e.target.value) || 1))}
-                      style={lockedDuration ? { color: 'var(--ink-soft)', cursor: 'not-allowed' } : undefined} />
+                      className="border-0 outline-0 w-full font-[inherit] text-sm bg-transparent text-ink appearance-none pt-0.5" style={lockedDuration ? { color: 'var(--ink-soft)', cursor: 'not-allowed' } : undefined} />
                   </div>
-                  <div className="booking-field">
-                    <label>Guests</label>
-                    <input type="number" min="1" max={venue.capacity} placeholder={`Max ${venue.capacity}`} value={guests} onChange={(e) => setGuests(e.target.value)} />
+                  <div className="py-[11px] px-3.5">
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.04em]">Guests</label>
+                    <input type="number" min="1" max={venue.capacity} placeholder={`Max ${venue.capacity}`} value={guests} onChange={(e) => setGuests(e.target.value)} className="border-0 outline-0 w-full font-[inherit] text-sm bg-transparent text-ink appearance-none pt-0.5" />
                   </div>
                 </div>
               </div>
 
-              <div className="booking-note-field">
-                <label>Special requests <span style={{ fontWeight: 400, color: 'var(--ink-faint)' }}>(optional)</span></label>
+              <div className="mb-3.5">
+                <label className="block text-[11px] font-bold uppercase tracking-[0.04em] mb-1.5">Special requests <span className="font-normal text-ink-faint">(optional)</span></label>
                 <textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={500}
-                  placeholder="Anything the venue should know in advance — setup time, layout, catering, parking…" />
+                  placeholder="Anything the venue should know in advance — setup time, layout, catering, parking…" className="w-full border border-line-strong rounded-xl p-[11px] px-3.5 font-[inherit] text-sm outline-none min-h-[70px] resize-y focus:border-brand" />
               </div>
 
-              <button className="btn-primary" onClick={onRequest} disabled={booking || requested}>
+              <button className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed" onClick={onRequest} disabled={booking || requested}>
                 {requested ? 'Request sent' : booking ? 'Sending…' : user ? 'Request to book' : 'Sign in to book'}
               </button>
-              <div className="booking-note">No charge until {venue.host.name} confirms your date</div>
+              <div className="text-center text-ink-faint text-sm mt-3">No charge until {venue.host.name} confirms your date</div>
 
-              {bookingError && <div className="form-error" style={{ marginTop: 12 }}>{bookingError}</div>}
+              {bookingError && <div className="bg-[#fdecef] border border-[#f5c2cd] text-[#a01230] text-[13.5px] p-2.5 px-3.5 rounded-[10px] mt-3">{bookingError}</div>}
 
-              <div className="booking-breakdown">
-                <div className="line"><span>{unit === 'event' ? 'Venue (flat rate)' : `${peso(venue.pricePerHour)} × ${qty} ${unit === 'head' ? 'guests' : 'hours'}`}</span><span>{peso(subtotal)}</span></div>
-                <div className="line"><span>Service fee</span><span>{peso(serviceFee)}</span></div>
-                <div className="total"><span>Total</span><span>{peso(total)}</span></div>
+              <div className="mt-[18px] text-sm">
+                <div className="flex justify-between py-1.5 text-ink-soft"><span>{unit === 'event' ? 'Venue (flat rate)' : `${peso(venue.pricePerHour)} × ${qty} ${unit === 'head' ? 'guests' : 'hours'}`}</span><span className="font-mono">{peso(subtotal)}</span></div>
+                <div className="flex justify-between py-1.5 text-ink-soft"><span>Service fee</span><span className="font-mono">{peso(serviceFee)}</span></div>
+                <div className="flex justify-between pt-3.5 mt-1.5 border-t border-line font-bold text-ink"><span>Total</span><span className="font-mono">{peso(total)}</span></div>
                 {unit !== 'hour' && (
-                  <p className="dash-muted" style={{ fontSize: 12, marginTop: 8 }}>
+                  <p className="text-ink-soft text-xs mt-2">
                     {unit === 'head' ? 'Priced per head' : 'Flat rate'}{venue.includedHours ? ` · covers ${venue.includedHours} hours` : ''} — duration doesn't change the total.
                   </p>
                 )}
               </div>
 
               {requested && (
-                <div className="booking-confirm">
-                  <CheckCircle2 size={18} />
-                  <span>Request sent to {venue.host.name}. They typically reply within an hour. Track it under <Link to="/bookings" style={{ color: 'var(--brand)', fontWeight: 600 }}>your bookings</Link>.</span>
+                <div className="bg-tint border border-line-strong rounded-[14px] p-3.5 mt-3.5 text-sm text-ink flex gap-2.5 items-start">
+                  <CheckCircle2 size={18} className="text-brand shrink-0 mt-0.5" />
+                  <span>Request sent to {venue.host.name}. They typically reply within an hour. Track it under <Link to="/bookings" className="text-brand font-semibold">your bookings</Link>.</span>
                 </div>
               )}
+
+              {!ownListing && (
+                <>
+                  <div className="h-px bg-line my-4 mx-0" />
+                  <button className="w-full py-[13px] px-4 rounded-xl border border-line-strong bg-white font-semibold text-[15px] text-ink transition-colors duration-150 hover:bg-tint inline-flex items-center justify-center gap-2" onClick={onMessage}>
+                    <MessageSquare size={16} /> Message the Host
+                  </button>
+                </>
+              )}
             </div>
-            {!ownListing && (
-              <button className="btn-ghost" onClick={onMessage} style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <MessageSquare size={16} /> Message the Host
-              </button>
-            )}
-            <div style={{ display: 'flex', gap: 9, alignItems: 'center', justifyContent: 'center', marginTop: 14, color: 'var(--ink-soft)', fontSize: 13 }}>
-              <ShieldCheck size={16} style={{ color: 'var(--brand)' }} /> No payment until {venue.host.name} confirms your date
+            <div className="flex gap-2 items-center justify-center mt-3.5 text-ink-soft text-[13px]">
+              <ShieldCheck size={16} className="text-brand" /> No payment until {venue.host.name} confirms your date
             </div>
           </aside>
         </div>
 
         {related.length > 0 && (
-          <section className="detail-section">
-            <h2 style={{ marginBottom: 18 }}>{relatedTitle}</h2>
+          <section className="py-[26px] border-t border-line">
+            <h2 className="text-xl font-bold mb-[18px]">{relatedTitle}</h2>
             <div className="grid">
               {related.map((v) => <VenueCard key={v.id} venue={v} />)}
             </div>

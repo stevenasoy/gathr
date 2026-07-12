@@ -46,20 +46,20 @@ export default function Legal() {
   return (
     <>
       <main>
-        <section className="page-hero">
-          <div className="wrap">
-            <span className="page-eyebrow">{data.eyebrow}</span>
-            <h1>{data.title}</h1>
-            <p>{data.updated}</p>
+        <section className="py-14 pb-10 bg-surface border-b border-line text-center">
+          <div className="wrap relative z-[1]">
+            <span className="inline-block text-xs font-bold tracking-[0.14em] uppercase text-brand mb-3">{data.eyebrow}</span>
+            <h1 className="text-[clamp(30px,4vw,44px)] font-extrabold max-w-[760px] mx-auto leading-[1.1]">{data.title}</h1>
+            <p className="text-ink-soft text-[17px] max-w-[620px] mx-auto mt-4">{data.updated}</p>
           </div>
         </section>
 
         <div className="wrap page-body">
-          <article className="legal-doc">
+          <article className="max-w-[720px]">
             {data.sections.map((s) => (
-              <section key={s.h}>
-                <h2>{s.h}</h2>
-                <p>{s.p}</p>
+              <section className="mb-[30px]" key={s.h}>
+                <h2 className="text-[19px] font-bold mb-2">{s.h}</h2>
+                <p className="text-ink-soft text-[15.5px] leading-relaxed m-0">{s.p}</p>
               </section>
             ))}
           </article>

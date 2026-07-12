@@ -6,6 +6,9 @@ import Footer from '../components/Footer'
 
 type ContactForm = { name: string; email: string; topic: string; message: string }
 
+const baseBtn = "w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+const inputCls = "w-full py-3 px-3.5 border border-line-strong rounded-xl font-[inherit] text-sm bg-white text-ink outline-none focus:border-brand"
+
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -40,38 +43,38 @@ export default function Contact() {
   return (
     <>
       <main>
-        <section className="page-hero">
-          <div className="wrap">
-            <span className="page-eyebrow">Contact</span>
-            <h1>Talk to a human.</h1>
-            <p>Most messages get a reply within an hour during PHT business hours. For urgent bookings, use the help center search first.</p>
+        <section className="py-14 pb-10 bg-surface border-b border-line text-center">
+          <div className="wrap relative z-[1]">
+            <span className="inline-block text-xs font-bold tracking-[0.14em] uppercase text-brand mb-3">Contact</span>
+            <h1 className="text-[clamp(30px,4vw,44px)] font-extrabold max-w-[760px] mx-auto leading-[1.1]">Talk to a human.</h1>
+            <p className="text-ink-soft text-[17px] max-w-[620px] mx-auto mt-4">Most messages get a reply within an hour during PHT business hours. For urgent bookings, use the help center search first.</p>
           </div>
         </section>
 
         <div className="wrap page-body">
           <section>
-            <div className="contact-layout">
+            <div className="grid grid-cols-[1fr_280px] gap-8 items-start">
               <div>
-                <div className="form-card" style={{ margin: 0 }}>
+                <div className="max-w-[460px] mx-auto p-8 border border-line rounded-lg bg-white shadow-card" style={{ margin: 0 }}>
                   {submitted ? (
-                    <div className="empty-state" style={{ padding: '20px 0' }}>
-                      <h2>Got it.</h2>
-                      <p>Thanks {form.name.split(' ')[0]}. Our team will reply to {form.email} shortly.</p>
-                      <Link to="/" className="btn-clear">Back to home</Link>
+                    <div className="text-center py-5 px-0">
+                      <h2 className="text-[22px] font-extrabold mb-2">Got it.</h2>
+                      <p className="text-ink-soft max-w-[460px] mx-auto mb-5 text-[15px] leading-relaxed">Thanks {form.name.split(' ')[0]}. Our team will reply to {form.email} shortly.</p>
+                      <Link to="/" className="font-semibold text-[13px] text-brand hover:underline">Back to home</Link>
                     </div>
                   ) : (
                     <form onSubmit={onSubmit}>
-                      <div className="form-row">
-                        <label>Name</label>
-                        <input required value={form.name} onChange={onChange('name')} placeholder="Your name" />
+                      <div className="mb-3.5">
+                        <label className="block text-[13px] font-bold mb-1.5 text-ink">Name</label>
+                        <input required value={form.name} onChange={onChange('name')} placeholder="Your name" className={inputCls} />
                       </div>
-                      <div className="form-row">
-                        <label>Email</label>
-                        <input required type="email" value={form.email} onChange={onChange('email')} placeholder="you@email.com" />
+                      <div className="mb-3.5">
+                        <label className="block text-[13px] font-bold mb-1.5 text-ink">Email</label>
+                        <input required type="email" value={form.email} onChange={onChange('email')} placeholder="you@email.com" className={inputCls} />
                       </div>
-                      <div className="form-row">
-                        <label>Topic</label>
-                        <select value={form.topic} onChange={onChange('topic')} style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--line-strong)', borderRadius: 12, fontFamily: 'inherit', fontSize: 14, background: '#fff' }}>
+                      <div className="mb-3.5">
+                        <label className="block text-[13px] font-bold mb-1.5 text-ink">Topic</label>
+                        <select value={form.topic} onChange={onChange('topic')} className={inputCls}>
                           <option value="general">General question</option>
                           <option value="booking">Booking support</option>
                           <option value="hosting">Host question</option>
@@ -79,12 +82,12 @@ export default function Contact() {
                           <option value="careers">Careers application</option>
                         </select>
                       </div>
-                      <div className="form-row">
-                        <label>Message</label>
-                        <textarea required value={form.message} onChange={onChange('message')} placeholder="How can we help?" />
+                      <div className="mb-3.5">
+                        <label className="block text-[13px] font-bold mb-1.5 text-ink">Message</label>
+                        <textarea required value={form.message} onChange={onChange('message')} placeholder="How can we help?" className={`${inputCls} resize-y min-h-[110px]`} />
                       </div>
-                      {error && <div className="form-error">{error}</div>}
-                      <button className="btn-primary" type="submit" disabled={loading}>
+                      {error && <div className="bg-[#fdecef] border border-[#f5c2cd] text-[#a01230] text-[13.5px] p-2.5 px-3.5 rounded-[10px] mb-3.5">{error}</div>}
+                      <button className={baseBtn} type="submit" disabled={loading}>
                         {loading ? 'Sending…' : 'Send message'}
                       </button>
                     </form>
@@ -92,21 +95,21 @@ export default function Contact() {
                 </div>
               </div>
 
-              <aside className="contact-side">
-                <div className="contact-card">
-                  <Mail size={20} />
-                  <h4>Email</h4>
-                  <p>hello@gathr.ph</p>
+              <aside className="grid gap-3">
+                <div className="p-5 border border-line rounded-lg bg-white">
+                  <Mail size={20} className="text-brand mb-2.5" />
+                  <h4 className="text-sm font-bold mb-1">Email</h4>
+                  <p className="text-ink-soft text-sm m-0 leading-relaxed">hello@gathr.ph</p>
                 </div>
-                <div className="contact-card">
-                  <MessageSquare size={20} />
-                  <h4>Live chat</h4>
-                  <p>9am – 8pm PHT, every day</p>
+                <div className="p-5 border border-line rounded-lg bg-white">
+                  <MessageSquare size={20} className="text-brand mb-2.5" />
+                  <h4 className="text-sm font-bold mb-1">Live chat</h4>
+                  <p className="text-ink-soft text-sm m-0 leading-relaxed">9am – 8pm PHT, every day</p>
                 </div>
-                <div className="contact-card">
-                  <Building2 size={20} />
-                  <h4>HQ</h4>
-                  <p>Cebu Business Park<br />Cebu City, 6000</p>
+                <div className="p-5 border border-line rounded-lg bg-white">
+                  <Building2 size={20} className="text-brand mb-2.5" />
+                  <h4 className="text-sm font-bold mb-1">HQ</h4>
+                  <p className="text-ink-soft text-sm m-0 leading-relaxed">Cebu Business Park<br />Cebu City, 6000</p>
                 </div>
               </aside>
             </div>

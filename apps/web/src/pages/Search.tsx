@@ -5,7 +5,7 @@ import SearchBar from '../components/SearchBar'
 import VenueCard from '../components/VenueCard'
 import Footer from '../components/Footer'
 import { useVenues } from '../context/VenuesContext'
-import { CATEGORIES, AMENITIES } from '../data/categories'
+import { AMENITIES } from '../data/categories'
 import { peso } from '../lib/format'
 
 const PRICE_MAX = 10000
@@ -19,32 +19,25 @@ export default function Search() {
   const qGuests = Number(params.get('guests')) || 0
   const qDate = params.get('date') || ''
 
-  const [type, setType] = useState(qType)
-  const [minGuests, setMinGuests] = useState(qGuests)
   const [maxPrice, setMaxPrice] = useState(PRICE_MAX)
   const [amenities, setAmenities] = useState<string[]>([])
   const [sort, setSort] = useState('recommended')
-  const [showFilters, setShowFilters] = useState(false)
+  const [showFilters, setShowFilters] = useState(() => typeof window !== 'undefined' ? window.innerWidth > 1080 : false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   // Reset pagination when the search query changes.
   useEffect(() => { setVisibleCount(PAGE_SIZE) }, [qWhere, qType])
 
-  // Re-searching from the compact bar changes the URL without remounting this
-  // page, so pull the new query values back into the filter state.
-  useEffect(() => { setType(qType) }, [qType])
-  useEffect(() => { setMinGuests(qGuests) }, [qGuests])
-
   const toggleAmenity = (a: string) =>
     setAmenities((cur) => (cur.includes(a) ? cur.filter((x) => x !== a) : [...cur, a]))
 
-  const clearAll = () => { setType(''); setMinGuests(0); setMaxPrice(PRICE_MAX); setAmenities([]) }
+  const clearAll = () => { setMaxPrice(PRICE_MAX); setAmenities([]) }
 
   const results = useMemo(() => {
     let list = venues.filter((v) => {
       if (qWhere && !`${v.city} ${v.area || ''}`.toLowerCase().includes(qWhere.toLowerCase())) return false
-      if (type && !v.types.includes(type)) return false
-      if (minGuests && v.capacity < minGuests) return false
+      if (qType && !v.types.includes(qType)) return false
+      if (qGuests && v.capacity < qGuests) return false
       // At the slider max the range is open-ended ("₱10,000+"); applying the
       // cap there would silently hide premium flat-rate venues.
       if (maxPrice < PRICE_MAX && v.pricePerHour > maxPrice) return false
@@ -56,55 +49,39 @@ export default function Search() {
     if (sort === 'rating') list = [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0))
     if (sort === 'capacity') list = [...list].sort((a, b) => b.capacity - a.capacity)
     return list
-  }, [venues, qWhere, type, minGuests, maxPrice, amenities, sort])
+  }, [venues, qWhere, qType, qGuests, maxPrice, amenities, sort])
 
-  const activeFilters = (type ? 1 : 0) + (minGuests ? 1 : 0) + (maxPrice < PRICE_MAX ? 1 : 0) + amenities.length
+  const activeFilters = (maxPrice < PRICE_MAX ? 1 : 0) + amenities.length
 
   return (
     <>
-      <div className="searchbar-wrap">
-        <div className="wrap searchbar-row">
+      <div className="border-b border-line bg-surface relative z-[45]">
+        <div className="max-w-wrap mx-auto px-10 flex items-center justify-between gap-4 py-4">
           <SearchBar compact key={params.toString()} initial={{ where: qWhere, type: qType, guests: qGuests ? String(qGuests) : '', date: qDate }} />
-          <button className="select-sort" onClick={() => setShowFilters((s) => !s)} style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+          <button className="border border-line-strong rounded-xl py-2.5 px-4 font-[inherit] text-sm font-semibold bg-white text-ink-soft shadow-[0_1px_2px_rgba(18,16,22,0.04)] transition-all duration-150 cursor-pointer inline-flex items-center hover:border-brand hover:text-ink hover:shadow-[0_2px_6px_rgba(194,90,30,0.08)]" onClick={() => setShowFilters((s) => !s)} style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
             <SlidersHorizontal size={16} /> Filters{activeFilters ? ` (${activeFilters})` : ''}
           </button>
         </div>
       </div>
 
-      <div className="wrap results-layout">
-        <aside className={'filters' + (showFilters ? ' open' : '')}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3>Filters</h3>
-            {activeFilters > 0 && <button className="btn-clear" onClick={clearAll}>Clear all</button>}
+      <div className={`max-w-wrap mx-auto px-10 grid pt-[26px] items-start transition-[grid-template-columns,gap] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${showFilters ? 'lg:grid-cols-[264px_1fr] lg:gap-x-[34px]' : 'grid-cols-1 gap-0'}`}>
+        <aside className={`sticky top-[88px] bg-white border border-line-strong rounded-[20px] p-6 shadow-[0_4px_20px_rgba(18,16,22,0.02)] ${showFilters ? 'block' : 'hidden'}`}>
+          <div className="flex justify-between items-center mb-[18px]">
+            <h3 className="text-[17px] font-extrabold m-0 text-ink">Filters</h3>
+            {activeFilters > 0 && <button className="font-semibold text-[13px] text-brand hover:underline" onClick={clearAll}>Clear all</button>}
           </div>
 
-          <div className="filter-group">
-            <label>Event type</label>
-            <div className="chiprow">
-              {CATEGORIES.filter((c) => c.id !== 'all').map((c) => (
-                <button key={c.id} className={'chip' + (type === c.id ? ' on' : '')}
-                  onClick={() => setType(type === c.id ? '' : c.id)}>{c.label}</button>
-              ))}
-            </div>
+          <div className="py-5 border-b border-line first:pt-0">
+            <label className="block text-[13.5px] font-bold mb-3 text-ink">Max price / hour</label>
+            <input type="range" min="2000" max={PRICE_MAX} step="500" value={maxPrice} onChange={(e) => setMaxPrice(Number(e.target.value))} className="w-full accent-brand h-1 rounded-full bg-line-strong" />
+            <div className="text-[13px] font-semibold text-brand mt-2 font-mono">Up to {peso(maxPrice)}{maxPrice >= PRICE_MAX ? '+' : ''}</div>
           </div>
 
-          <div className="filter-group">
-            <label>Minimum capacity</label>
-            <input type="range" min="0" max="250" step="10" value={minGuests} onChange={(e) => setMinGuests(Number(e.target.value))} />
-            <div className="range-val">{minGuests ? `${minGuests}+ guests` : 'Any size'}</div>
-          </div>
-
-          <div className="filter-group">
-            <label>Max price / hour</label>
-            <input type="range" min="2000" max={PRICE_MAX} step="500" value={maxPrice} onChange={(e) => setMaxPrice(Number(e.target.value))} />
-            <div className="range-val">Up to {peso(maxPrice)}{maxPrice >= PRICE_MAX ? '+' : ''}</div>
-          </div>
-
-          <div className="filter-group">
-            <label>Amenities</label>
+          <div className="py-5 border-b border-line last:border-b-0 last:pb-0">
+            <label className="block text-[13.5px] font-bold mb-3 text-ink">Amenities</label>
             {AMENITIES.map((a) => (
-              <label key={a} className="amenity-check">
-                <input type="checkbox" checked={amenities.includes(a)} onChange={() => toggleAmenity(a)} />
+              <label key={a} className="flex items-center gap-2.5 py-1.5 text-[14.5px] text-ink-soft cursor-pointer transition-colors duration-150 hover:text-ink">
+                <input type="checkbox" checked={amenities.includes(a)} onChange={() => toggleAmenity(a)} className="w-4 h-4 accent-brand cursor-pointer" />
                 {a}
               </label>
             ))}
@@ -112,9 +89,9 @@ export default function Search() {
         </aside>
 
         <section>
-          <div className="results-head">
-            <h1>{qWhere ? `Venues in ${qWhere}` : 'All venues'} <span className="muted">· {results.length} found</span></h1>
-            <select className="select-sort" value={sort} onChange={(e) => setSort(e.target.value)}>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2.5">
+            <h1 className="text-[22px] font-extrabold">{qWhere ? `Venues in ${qWhere}` : 'All venues'} <span className="text-ink-soft font-medium text-sm font-mono">· {results.length} found</span></h1>
+            <select className="border border-line-strong rounded-xl py-2.5 px-4 font-[inherit] text-sm font-semibold bg-white text-ink-soft shadow-[0_1px_2px_rgba(18,16,22,0.04)] transition-all duration-150 cursor-pointer inline-flex items-center hover:border-brand hover:text-ink hover:shadow-[0_2px_6px_rgba(194,90,30,0.08)] appearance-none pr-9" value={sort} onChange={(e) => setSort(e.target.value)} style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235c5752' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', backgroundSize: '14px' }}>
               <option value="recommended">Recommended</option>
               <option value="price-low">Price: low to high</option>
               <option value="price-high">Price: high to low</option>
@@ -130,7 +107,7 @@ export default function Search() {
               </div>
               {results.length > visibleCount && (
                 <button
-                  className="btn-clear"
+                  className="font-semibold text-[13px] text-brand hover:underline"
                   style={{ margin: '24px auto', display: 'block' }}
                   onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
                 >
@@ -139,10 +116,10 @@ export default function Search() {
               )}
             </>
           ) : (
-            <div className="empty">
-              <h3>No venues match those filters</h3>
+            <div className="text-center py-20 px-5 text-ink-soft">
+              <h3 className="text-xl text-ink mb-2">No venues match those filters</h3>
               <p>Try widening your price range or clearing a filter.</p>
-              <button className="btn-clear" onClick={clearAll} style={{ marginTop: 12 }}>Clear all filters</button>
+              <button className="font-semibold text-[13px] text-brand hover:underline" onClick={clearAll} style={{ marginTop: 12 }}>Clear all filters</button>
             </div>
           )}
         </section>
