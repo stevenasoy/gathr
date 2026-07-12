@@ -4,7 +4,7 @@ import { CATEGORIES } from '../data/categories'
 export default function CategoryRow({ active, onChange }: { active: string; onChange: (id: string) => void }) {
   return (
     <div className="relative z-40 bg-surface border-b border-line">
-      <div className="max-w-wrap mx-auto px-10 flex gap-1 overflow-x-auto py-3.5 pb-3 scrollbar-hide">
+      <div className="max-w-wrap mx-auto px-6 sm:px-10 flex gap-1 overflow-x-auto py-3.5 pb-3 scrollbar-hide">
         {CATEGORIES.map((c) => {
           const Icon = categoryIcon(c.icon)
           const isActive = active === c.id

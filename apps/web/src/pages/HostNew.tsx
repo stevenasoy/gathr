@@ -309,8 +309,8 @@ export default function HostNew() {
             <>
               <h1 className="text-[clamp(26px,3.4vw,34px)] font-extrabold leading-[1.12]">Review your listing.</h1>
               <p className="text-ink-soft text-base my-3 mb-7">Here's what guests will see. Publish when you're ready.</p>
-              <div className="flex gap-[18px] border border-line-strong rounded-lg p-4 bg-white shadow-card">
-                <div className="w-[160px] h-[130px] rounded-[14px] overflow-hidden bg-gradient shrink-0">
+              <div className="flex flex-col sm:flex-row gap-[18px] border border-line-strong rounded-lg p-4 bg-white shadow-card">
+                <div className="w-full sm:w-[160px] h-[130px] rounded-[14px] overflow-hidden bg-gradient shrink-0">
                   {photos[0]
                     ? <img src={photos[0]} alt={form.name} loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-full h-full object-cover" />
                     : <div className="w-full h-full grid place-items-center text-white opacity-80"><ImagePlus size={26} /></div>}

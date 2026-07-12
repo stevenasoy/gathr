@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarCheck, MapPin, Users, Clock, X, StickyNote } from 'lucide-react'
 import Footer from '../components/Footer'
+import { RowListSkeleton } from '../components/Skeleton'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useAuth } from '../context/AuthContext'
 import { listBookings, cancelBooking } from '../lib/bookings'
 import { peso, fmtDate } from '../lib/format'
@@ -13,6 +15,7 @@ export default function Bookings() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [cancelError, setCancelError] = useState('')
+  const [pendingCancel, setPendingCancel] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -36,7 +39,6 @@ export default function Bookings() {
   }, [user])
 
   const onCancel = async (id: string) => {
-    if (!window.confirm('Cancel this request? This cannot be undone.')) return
     const prev = rows
     setRows((r) => r.filter((b) => b.id !== id))
     setCancelError('')
@@ -95,7 +97,7 @@ export default function Bookings() {
               <button className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]" style={{ width: 'auto', padding: '12px 22px' }} onClick={() => location.reload()}>Retry</button>
             </div>
           ) : loading || authLoading ? (
-            <div className="text-center py-[60px] px-5 text-ink-soft"><p>Loading your bookings…</p></div>
+            <RowListSkeleton count={3} />
           ) : rows.length ? (
             <div className="flex flex-col gap-3.5">
               {rows.map((b) => (
@@ -113,10 +115,10 @@ export default function Bookings() {
                     </div>
                     {b.note && <div className="mt-2 text-[13.5px] text-ink-soft flex gap-1.5 items-start"><StickyNote size={15} className="text-brand shrink-0 mt-0.5" /> <span>{b.note}</span></div>}
                   </div>
-                  <div className="text-right flex flex-col md:items-end gap-1.5 w-full md:w-auto flex-row md:flex-col items-center justify-between">
+                  <div className="text-right flex flex-row md:flex-col md:items-end gap-1.5 w-full md:w-auto items-center justify-between">
                     <b className="text-[17px] font-mono">{peso(b.total_php)}</b>
                     {b.status === 'requested' ? (
-                      <button className="font-semibold text-[13px] text-brand hover:underline inline-flex items-center gap-1" onClick={() => onCancel(b.id)}>
+                      <button className="font-semibold text-[13px] text-brand hover:underline inline-flex items-center gap-1" onClick={() => setPendingCancel(b.id)}>
                         <X size={14} /> Cancel
                       </button>
                     ) : b.status === 'confirmed' ? (
@@ -136,6 +138,15 @@ export default function Bookings() {
           )}
         </div>
       </main>
+      <ConfirmDialog
+        open={pendingCancel !== null}
+        onOpenChange={(o) => { if (!o) setPendingCancel(null) }}
+        onConfirm={async () => { const id = pendingCancel; setPendingCancel(null); if (id) await onCancel(id) }}
+        title="Cancel this request?"
+        body="This cannot be undone."
+        confirmLabel="Cancel request"
+        destructive
+      />
       <Footer />
     </>
   )

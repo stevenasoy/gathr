@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { supabase, createUserSupabase, getAccessToken } from '../lib/supabase'
 import { useAuth } from './AuthContext'
@@ -20,23 +20,41 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<Booking[]>([])
   const [venueIds, setVenueIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const isMounted = useRef(true)
+
+  useEffect(() => {
+    isMounted.current = true
+    return () => { isMounted.current = false }
+  }, [])
 
   const refresh = useCallback(async () => {
-    if (!user || !supabase) { setPending([]); setVenueIds([]); return }
+    if (!user || !supabase) {
+      if (isMounted.current) {
+        setPending([])
+        setVenueIds([])
+      }
+      return
+    }
     try {
-      setLoading(true)
+      if (isMounted.current) setLoading(true)
       const { data: mine, error: mineErr } = await fetchMyVenues(user.id)
       if (mineErr) throw mineErr
+      if (!isMounted.current) return
       const ids = (mine || []).map((v) => v.id)
       setVenueIds(ids)
-      if (!ids.length) { setPending([]); return }
+      if (!ids.length) {
+        setPending([])
+        return
+      }
       const { data, error } = await listRequestsForVenues(ids)
       if (error) throw error
-      setPending((data || []).filter((b) => b.status === 'requested'))
+      if (isMounted.current) {
+        setPending((data || []).filter((b) => b.status === 'requested'))
+      }
     } catch (e) {
       console.error('notifications refresh failed', e)
     } finally {
-      setLoading(false)
+      if (isMounted.current) setLoading(false)
     }
   }, [user])
 
@@ -61,7 +79,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         }
       })
       .subscribe()
-    return () => { sb.removeChannel(ch) }
+    return () => { userSb.removeChannel(ch) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, venueIdsKey])
 

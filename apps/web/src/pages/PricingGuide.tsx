@@ -68,7 +68,7 @@ export default function PricingGuide() {
                 <h3 className="text-xl font-extrabold">Ready to list?</h3>
                 <p className="text-ink-soft mt-1.5 mb-0 text-[14.5px]">It takes a few minutes and goes live right away.</p>
               </div>
-              <Link to="/host" className="w-full bg-brand text-white font-bold text-[15px] py-3 px-7 rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]" style={{ width: 'auto', padding: '13px 22px' }}>List your venue</Link>
+              <Link to="/host" className="w-full sm:w-auto bg-brand text-white font-bold text-[15px] py-3 px-7 sm:py-[13px] sm:px-[22px] rounded-full border border-white/[0.08] shadow-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] inline-flex items-center justify-center gap-2 hover:bg-brand-press hover:shadow-[0_8px_24px_rgba(194,90,30,0.25)] hover:-translate-y-px active:translate-y-px active:scale-[0.98]">List your venue</Link>
             </div>
           </section>
         </div>

@@ -34,8 +34,8 @@ export default function SearchBar({ compact = false, initial = {} }: SearchBarPr
     <form className="pill" onSubmit={submit} role="search">
       <div className="pill-seg pill-seg--select" style={segPadding ? { padding: segPadding } : undefined}>
         <label htmlFor="sb-where">Where</label>
-        <input id="sb-where" list="cities" placeholder="Search city" value={where} onChange={(e) => setWhere(e.target.value)} />
-        <datalist id="cities">
+        <input id="sb-where" list="search-cities-list" placeholder="Search city" value={where} onChange={(e) => setWhere(e.target.value)} />
+        <datalist id="search-cities-list">
           {CITIES.map((c) => <option key={c} value={c} />)}
         </datalist>
         <ChevronDown size={16} className="pill-seg-caret" />
@@ -77,7 +77,7 @@ export default function SearchBar({ compact = false, initial = {} }: SearchBarPr
 
       <button className="pill-go" type="submit">
         <Search size={18} />
-        {!compact && <span>Search</span>}
+        {!compact && <span className="hidden xl:inline">Search</span>}
       </button>
     </form>
   )

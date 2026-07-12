@@ -10,31 +10,63 @@ export default function Footer() {
 
   return (
     <footer className="bg-white border-t border-line mt-14">
-      <div className="bg-gradient text-white">
-        <div className="max-w-wrap mx-auto px-10 flex items-center justify-between gap-6 py-11 flex-wrap">
-          {hosting ? (
-            <>
-              <div>
-                <h3 className="text-[28px] font-extrabold max-w-[460px]">Planning a gathering of your own?</h3>
-                <p className="mt-2 opacity-[0.92] max-w-[460px]">Switch over and book a venue for your next wedding, offsite, or celebration.</p>
-              </div>
-              <button onClick={bookAsGatherer} className="bg-white text-ink font-extrabold py-3.5 px-7 rounded-full text-[15px] transition-transform duration-200 border border-white/[0.4] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(18,16,22,0.2)] active:translate-y-0 active:scale-[0.98]">Book a venue</button>
-            </>
-          ) : (
-            <>
-              <div>
-                <h3 className="text-[28px] font-extrabold max-w-[460px]">Have a space worth gathering in?</h3>
-                <p className="mt-2 opacity-[0.92] max-w-[460px]">List it on Gathr and reach Gatherers planning their next wedding, offsite, or launch.</p>
-              </div>
-              <Link to="/host">
-                <button className="bg-white text-ink font-extrabold py-3.5 px-7 rounded-full text-[15px] transition-transform duration-200 border border-white/[0.4] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(18,16,22,0.2)] active:translate-y-0 active:scale-[0.98]">List your venue</button>
-              </Link>
-            </>
-          )}
+      {/* Promoted host/booker CTA banner card */}
+      <div className="max-w-wrap mx-auto px-6 sm:px-10 pt-12">
+        <div className="relative overflow-hidden rounded-[32px] bg-gradient text-white p-8 sm:p-12 shadow-[0_16px_40px_rgba(194,90,30,0.15)]">
+          {/* Decorative mesh glow */}
+          <div className="absolute inset-0 z-0 opacity-40 mix-blend-overlay pointer-events-none" style={{
+            background: `
+              radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25) 0%, transparent 60%),
+              radial-gradient(circle at 20% 80%, rgba(0,0,0,0.3) 0%, transparent 60%)
+            `
+          }} />
+          
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="max-w-[540px]">
+              {hosting ? (
+                <>
+                  <h3 className="font-outfit text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                    Planning a gathering<br className="hidden sm:inline" /> of your own?
+                  </h3>
+                  <p className="mt-3 text-base text-white/90 leading-relaxed font-medium">
+                    Switch over and browse extraordinary venues for your next wedding, corporate offsite, or celebration.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-outfit text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                    Have a space worth<br className="hidden sm:inline" /> gathering in?
+                  </h3>
+                  <p className="mt-3 text-base text-white/90 leading-relaxed font-medium">
+                    List it on Gathr and reach guests planning their next wedding, corporate launch, workshop, or private dinner.
+                  </p>
+                </>
+              )}
+            </div>
+            
+            <div className="shrink-0">
+              {hosting ? (
+                <button 
+                  onClick={bookAsGatherer} 
+                  className="bg-white text-ink font-bold py-4 px-8 rounded-full text-[15px] whitespace-nowrap shadow-[0_4px_14px_rgba(255,255,255,0.15)] transition-all duration-300 hover:scale-105 hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] active:scale-[0.98] border border-white/[0.2]"
+                >
+                  Book a venue
+                </button>
+              ) : (
+                <Link to="/host">
+                  <button 
+                    className="bg-white text-ink font-bold py-4 px-8 rounded-full text-[15px] whitespace-nowrap shadow-[0_4px_14px_rgba(255,255,255,0.15)] transition-all duration-300 hover:scale-105 hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] active:scale-[0.98] border border-white/[0.2]"
+                  >
+                    List your venue
+                  </button>
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-wrap mx-auto px-10 grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-[30px] py-12 pb-8">
+      <div className="max-w-wrap mx-auto px-6 sm:px-10 grid grid-cols-2 md:grid-cols-[1.4fr_1fr_1fr_1fr] gap-[30px] py-12 pb-8">
         <div className="foot-col foot-about">
           <Link to="/" className="flex items-center gap-2.5 font-outfit font-extrabold text-2xl tracking-[-0.03em] text-ink transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02]">
             <span className="w-8 h-8 rounded-lg bg-brand grid place-items-center text-white text-[20px] font-bold font-display italic pb-[3px] shadow-[0_2px_8px_rgba(194,90,30,0.2)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-rotate-6 hover:scale-105">g</span>
@@ -66,7 +98,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-wrap mx-auto px-10 flex justify-between items-center border-t border-line py-5 text-[13px] text-ink-soft flex-wrap gap-3">
+      <div className="max-w-wrap mx-auto px-6 sm:px-10 flex justify-between items-center border-t border-line py-5 text-[13px] text-ink-soft flex-wrap gap-3">
         <span>© 2026 Gathr. A concept demo.</span>
         <span className="inline-flex items-center gap-2">
           <Link to="/privacy" className="text-ink-soft hover:text-brand">Privacy</Link>

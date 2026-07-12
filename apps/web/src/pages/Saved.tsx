@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
 import { Heart } from 'lucide-react'
 import VenueCard from '../components/VenueCard'
+import { VenueGridSkeleton } from '../components/Skeleton'
 import Footer from '../components/Footer'
 import { useSaved } from '../context/SavedContext'
 import { useAuth } from '../context/AuthContext'
@@ -30,9 +31,9 @@ export default function Saved() {
 
         <div className="max-w-wrap mx-auto px-10 py-12 pb-20">
           {loading ? (
-            <div className="text-center py-[60px] px-5 text-ink-soft"><p>Loading your saved venues…</p></div>
+            <VenueGridSkeleton count={6} />
           ) : saved.length ? (
-            <div className="grid">
+            <div className="venue-grid">
               {saved.map((v) => <VenueCard key={v.id} venue={v} />)}
             </div>
           ) : (

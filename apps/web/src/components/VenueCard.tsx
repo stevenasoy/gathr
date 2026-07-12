@@ -47,6 +47,7 @@ function VenueCard({ venue }: { venue: Venue }) {
           </div>
         </Link>
       </div>
+      {venue.isHostListing && (
       <button
         type="button"
         className={[
@@ -58,6 +59,7 @@ function VenueCard({ venue }: { venue: Venue }) {
       >
         <Heart size={22} strokeWidth={2} className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-transform duration-150 hover:scale-[1.12]" />
       </button>
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import Header from './components/Header'
 import ScrollToTop from './components/ScrollToTop'
 import ErrorBoundary from './components/ErrorBoundary'
+import { ToastProvider } from './components/Toast'
 import Home from './pages/Home'
 import { setRouteTitle } from './lib/title'
 
@@ -79,44 +80,48 @@ const Loading = () => (
 
 export default function App() {
   const { pathname } = useLocation()
+  // Auth pages are bare standalone screens — no site header/footer.
+  const isAuthRoute = ['/signin', '/signup'].includes(pathname)
   return (
-    <>
+    <ToastProvider>
       <div className="noise-overlay" aria-hidden="true" />
       <RouteTitle />
       <ScrollToTop />
-      <Header />
-      <Suspense fallback={<Loading />}>
-        <ErrorBoundary key={pathname}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/venue/:id" element={<Venue />} />
-            <Route path="/host" element={<Host />} />
-            <Route path="/host/dashboard" element={<HostDashboard />} />
-            <Route path="/host/new" element={<HostNew />} />
-            <Route path="/host/edit/:id" element={<HostEdit />} />
-            <Route path="/messages" element={<Messages role="guest" />} />
-            <Route path="/host-resources" element={<HostResources />} />
-            <Route path="/pricing-guide" element={<PricingGuide />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/saved" element={<Saved />} />
-            <Route path="/bookings" element={<Bookings />} />
-            <Route path="/bookings/:id" element={<BookingDetail />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/privacy" element={<Legal />} />
-            <Route path="/terms" element={<Legal />} />
-            <Route path="/sitemap" element={<Sitemap />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </ErrorBoundary>
-      </Suspense>
-    </>
+      {!isAuthRoute && <Header />}
+      <div className={!isAuthRoute && pathname !== '/' ? 'pt-6 sm:pt-10' : ''}>
+        <Suspense fallback={<Loading />}>
+          <ErrorBoundary key={pathname}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/venue/:id" element={<Venue />} />
+              <Route path="/host" element={<Host />} />
+              <Route path="/host/dashboard" element={<HostDashboard />} />
+              <Route path="/host/new" element={<HostNew />} />
+              <Route path="/host/edit/:id" element={<HostEdit />} />
+              <Route path="/messages" element={<Messages role="guest" />} />
+              <Route path="/host-resources" element={<HostResources />} />
+              <Route path="/pricing-guide" element={<PricingGuide />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/saved" element={<Saved />} />
+              <Route path="/bookings" element={<Bookings />} />
+              <Route path="/bookings/:id" element={<BookingDetail />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/privacy" element={<Legal />} />
+              <Route path="/terms" element={<Legal />} />
+              <Route path="/sitemap" element={<Sitemap />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ErrorBoundary>
+        </Suspense>
+      </div>
+    </ToastProvider>
   )
 }

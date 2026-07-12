@@ -45,7 +45,7 @@ export default function Community() {
 
         <div className="wrap page-body">
           <section>
-            <div className="grid grid-cols-2 gap-[18px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[18px]">
               {STORIES.map((s) => (
                 <div className="p-7 border border-line rounded-lg bg-white relative" key={s.name}>
                   <Quote size={22} className="text-brand opacity-35 mb-3.5" />

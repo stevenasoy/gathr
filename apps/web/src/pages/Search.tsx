@@ -56,7 +56,7 @@ export default function Search() {
   return (
     <>
       <div className="border-b border-line bg-surface relative z-[45]">
-        <div className="max-w-wrap mx-auto px-10 flex items-center justify-between gap-4 py-4">
+        <div className="max-w-wrap mx-auto px-10 flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <SearchBar compact key={params.toString()} initial={{ where: qWhere, type: qType, guests: qGuests ? String(qGuests) : '', date: qDate }} />
           <button className="border border-line-strong rounded-xl py-2.5 px-4 font-[inherit] text-sm font-semibold bg-white text-ink-soft shadow-[0_1px_2px_rgba(18,16,22,0.04)] transition-all duration-150 cursor-pointer inline-flex items-center hover:border-brand hover:text-ink hover:shadow-[0_2px_6px_rgba(194,90,30,0.08)]" onClick={() => setShowFilters((s) => !s)} style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
             <SlidersHorizontal size={16} /> Filters{activeFilters ? ` (${activeFilters})` : ''}
@@ -102,7 +102,7 @@ export default function Search() {
 
           {results.length ? (
             <>
-              <div className="grid">
+              <div className="venue-grid">
                 {results.slice(0, visibleCount).map((v) => <VenueCard key={v.id} venue={v} />)}
               </div>
               {results.length > visibleCount && (

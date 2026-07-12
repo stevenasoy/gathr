@@ -60,7 +60,7 @@ export default function Sitemap() {
         </section>
 
         <div className="wrap page-body">
-          <div className="grid grid-cols-4 gap-x-6 gap-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-8">
             {SECTIONS.map((s) => (
               <div key={s.title}>
                 <h4 className="text-[13px] font-bold uppercase tracking-[0.06em] text-ink mb-3.5">{s.title}</h4>

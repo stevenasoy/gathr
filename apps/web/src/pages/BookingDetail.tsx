@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, CalendarCheck, Clock, Users, MapPin, StickyNote, MessageSquare, Check, X, ExternalLink } from 'lucide-react'
 import Footer from '../components/Footer'
+import { BookingDetailSkeleton } from '../components/Skeleton'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Stars, StarPicker } from '../components/Stars'
 import { useAuth } from '../context/AuthContext'
 import { useVenues } from '../context/VenuesContext'
@@ -25,6 +27,7 @@ export default function BookingDetail() {
   const [loadError, setLoadError] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [showCancel, setShowCancel] = useState(false)
   // Review state (Gatherer side, completed bookings only)
   const [myReview, setMyReview] = useState<Review | null>(null)
   const [rating, setRating] = useState(0)
@@ -58,22 +61,26 @@ export default function BookingDetail() {
   // (covers a Host's own unlisted venue).
   const catalogVenue = b ? findVenue(b.venue_id) : null
   useEffect(() => {
+    let active = true
     if (b && !catalogVenue && !fetchedVenue) {
       fetchVenue(b.venue_id)
-        .then((v) => setFetchedVenue(v))
+        .then((v) => { if (active) setFetchedVenue(v) })
         .catch((e) => console.error('venue fetch failed', e))
     }
+    return () => { active = false }
   }, [b, catalogVenue, fetchedVenue])
   const images = (catalogVenue?.images?.length ? catalogVenue.images : fetchedVenue?.images) || []
 
   // A completed booking (confirmed + past date) can be reviewed once.
   const completed = !!b && b.status === 'confirmed' && b.event_date && b.event_date <= todayYMD()
   useEffect(() => {
+    let active = true
     if (b && user && b.user_id === user.id && completed) {
       getReviewForBooking(b.id)
-        .then(setMyReview)
+        .then((r) => { if (active) setMyReview(r) })
         .catch((e) => console.error('review lookup failed', e))
     }
+    return () => { active = false }
   }, [b, user, completed])
 
   const submitReview = async () => {
@@ -101,7 +108,12 @@ export default function BookingDetail() {
   }
 
   if (authLoading || loading) {
-    return <main className="min-h-[70vh] grid place-items-center py-[60px] px-5"><p className="text-ink-soft">Loading…</p></main>
+    return (
+      <>
+        <BookingDetailSkeleton />
+        <Footer />
+      </>
+    )
   }
   if (!user) {
     return (
@@ -147,7 +159,6 @@ export default function BookingDetail() {
   const messageTo = isGatherer ? `/messages?b=${b.id}` : `/host/dashboard?tab=messages&b=${b.id}`
 
   const onCancel = async () => {
-    if (!window.confirm('Cancel this request? This cannot be undone.')) return
     try {
       setBusy(true)
       const { error: e } = await cancelBooking(b.id)
@@ -253,7 +264,7 @@ export default function BookingDetail() {
 
           {/* Gatherer can cancel only while pending */}
           {isGatherer && b.status === 'requested' && (
-            <button onClick={onCancel} disabled={busy} className="py-2 px-3.5 rounded-xl border border-line-strong bg-white font-semibold text-[15px] transition-colors duration-150 hover:bg-tint inline-flex items-center gap-2" style={{ color: '#a01230' }}>
+            <button onClick={() => setShowCancel(true)} disabled={busy} className="py-2 px-3.5 rounded-xl border border-line-strong bg-white font-semibold text-[15px] transition-colors duration-150 hover:bg-tint inline-flex items-center gap-2" style={{ color: '#a01230' }}>
               <X size={16} /> Cancel request
             </button>
           )}
@@ -308,6 +319,15 @@ export default function BookingDetail() {
           </div>
         )}
       </main>
+      <ConfirmDialog
+        open={showCancel}
+        onOpenChange={setShowCancel}
+        onConfirm={async () => { setShowCancel(false); await onCancel() }}
+        title="Cancel this request?"
+        body={<>This will cancel your request for <b className="text-ink">{b.venue_name}</b>. This cannot be undone.</>}
+        confirmLabel="Cancel request"
+        destructive
+      />
       <Footer />
     </>
   )

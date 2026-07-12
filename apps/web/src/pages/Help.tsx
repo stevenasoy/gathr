@@ -46,7 +46,7 @@ export default function Help() {
         <div className="wrap page-body">
           <section>
             <h2 className="text-2xl font-extrabold mb-[18px]">Browse by topic</h2>
-            <div className="grid grid-cols-3 gap-[18px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
               {TOPICS.map((t) => (
                 <div className="p-6 border border-line rounded-lg bg-surface transition-all duration-150 hover:border-line-strong hover:-translate-y-0.5 hover:shadow-bar" key={t.title}>
                   <div className="w-10 h-10 rounded-xl bg-tint text-brand grid place-items-center mb-3"><t.icon size={20} /></div>

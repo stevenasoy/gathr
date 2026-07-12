@@ -13,11 +13,16 @@ import conversationsRouter from './routes/conversations.js'
 import messagesRouter from './routes/messages.js'
 import reviewsRouter from './routes/reviews.js'
 import authRouter from './routes/auth.js'
+import { HttpError } from './lib/errors.js'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 3001
 const isProd = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
+// Raw error details (message + stack) are exposed ONLY in explicit dev/test.
+// Anything else — including an unset NODE_ENV, staging, or a prod misconfig —
+// gets the genericized safe path so internals never leak by accident.
+const exposeErrorDetails = isTest || process.env.NODE_ENV === 'development'
 
 // --- Security middleware ---
 app.use(helmet())
@@ -137,7 +142,14 @@ app.post('/api/contact', contactLimiter, (req: Request, res: Response, next: Nex
   }
 })
 
-app.use('/api/auth', authIpLimiter, authEmailLimiter, authRouter)
+// Apply strict credential/sign-up rate limiting only to sensitive endpoints.
+app.use('/api/auth/signup', authIpLimiter, authEmailLimiter)
+app.use('/api/auth/signin', authIpLimiter, authEmailLimiter)
+app.use('/api/auth/reset-password', authIpLimiter, authEmailLimiter)
+app.use('/api/auth/update-password', authIpLimiter, authEmailLimiter)
+// The remaining auth endpoints (like /session, /signout, /refresh) bypass the
+// aggressive 10/15min brute-force limiter and fall back to the global 100/15min limit.
+app.use('/api/auth', authRouter)
 
 app.use('/api/venues', resolveUser, writeLimiter, venuesRouter)
 app.use('/api/bookings', resolveUser, writeLimiter, bookingsRouter)
@@ -149,43 +161,60 @@ app.use('/api/reviews', resolveUser, writeLimiter, reviewsRouter)
 app.use((_req: Request, res: Response) => res.status(404).json({ error: 'Not found.' }))
 
 // --- Error handler (no stack traces or raw driver messages in production) ---
+// Only HttpError carries a curated, client-safe message. Everything else
+// (raw Supabase/Postgres/driver errors — RLS policy text, constraint names,
+// column/uuid syntax errors, etc.) is genericized in prod so internals never
+// reach the client. Full error is always logged server-side.
 interface AppError {
   status?: number
   code?: string
   message?: string
   stack?: string
 }
+
+// RLS / permission-denied errors. PostgREST reports these as PG code 42501
+// or with "row-level security" / "permission denied" in the message; either
+// way the raw text reveals the security mechanism, so it must be genericized.
+function isPermissionError(err: AppError): boolean {
+  if (err.code === '42501') return true
+  return /row-level security|permission denied/i.test(err.message || '')
+}
+
 app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err)
-  let status = err.status || 500
-  // Default to the driver/app message so dev stays debuggable; prod may swap
-  // this for a generic safe message below depending on the error class.
-  let message = err.message || 'Server error.'
 
-  // Map known Postgres error codes to safe, client-facing responses. These
-  // generic messages intentionally avoid leaking table/column/constraint names
-  // that the raw driver message would otherwise expose.
-  if (err.code === '23505') {
-    // unique_violation — preserve existing behavior: 409 with the original
-    // message (callers may rely on this shape).
-    status = 409
-  } else if (err.code === '23503') {
-    // foreign_key_violation — referential conflict with a related resource.
-    status = 409
-    if (isProd) message = 'Conflict with related resource.'
-  } else if (err.code === '22P02') {
-    // invalid_input_syntax — malformed identifier/value sent to Postgres.
-    status = 400
-    if (isProd) message = 'Invalid input.'
-  } else if (status >= 500 && isProd) {
-    // Unexpected server errors: never surface raw driver/app messages to
-    // clients in production.
-    message = 'Something went wrong.'
+  // Intentional, client-safe message from a route — forward verbatim.
+  if (err instanceof HttpError && err.safe) {
+    const body: { error: string; stack?: string } = { error: err.message }
+    if (exposeErrorDetails) body.stack = err.stack
+    res.status(err.status).json(body)
+    return
   }
 
-  const body: { error: string; stack?: string } = { error: message }
-  if (!isProd) body.stack = err.stack
-  res.status(status).json(body)
+  // Map known Postgres codes to the right status. Messages are genericized
+  // unless we're in explicit dev/test; otherwise the raw message is preserved
+  // for debugging.
+  let status = err.status || 500
+  if (err.code === '23505') status = 409       // unique_violation
+  else if (err.code === '23503') status = 409  // foreign_key_violation
+  else if (err.code === '22P02') status = 400  // invalid_input_syntax (e.g. bad uuid)
+  else if (isPermissionError(err)) status = 403 // RLS / permission denied
+
+  if (exposeErrorDetails) {
+    res.status(status).json({ error: err.message || 'Server error.', stack: err.stack })
+    return
+  }
+
+  // Anything not explicit dev/test (prod, staging, unset NODE_ENV): never
+  // surface raw driver/pg/supabase messages.
+  const safeMessage =
+    err.code === '23505' ? 'That conflicts with an existing record.' :
+    err.code === '23503' ? 'Conflict with related resource.' :
+    err.code === '22P02' ? 'Invalid input.' :
+    status === 403 ? "You don't have permission to do that." :
+    status >= 500 ? 'Something went wrong.' :
+    'We couldn\'t complete that request. Please try again.'
+  res.status(status).json({ error: safeMessage })
 })
 
 // Only bind the port when run as the main module (e.g. `node dist/index.js`),

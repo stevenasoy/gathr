@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { Star, ChevronLeft, MapPin, Users, Clock, CheckCircle2, ShieldCheck, Share, Heart, MessageSquare } from 'lucide-react'
+import { Star, ChevronLeft, ChevronRight, MapPin, Users, Clock, CheckCircle2, ShieldCheck, Share, Heart, MessageSquare } from 'lucide-react'
 import Footer from '../components/Footer'
 import VenueCard from '../components/VenueCard'
+import { HeroSkeleton } from '../components/Skeleton'
+import { Modal } from '../components/Modal'
+import { useToast } from '../components/Toast'
 import { Stars } from '../components/Stars'
 import { amenityIcon } from '../lib/icons'
 import { usePageTitle } from '../lib/title'
@@ -44,8 +47,9 @@ export default function Venue() {
   const [requested, setRequested] = useState(false)
   const [booking, setBooking] = useState(false)
   const [bookingError, setBookingError] = useState('')
-  const [shareToast, setShareToast] = useState(false)
   const [realReviews, setRealReviews] = useState<Review[]>([])
+  const [lightbox, setLightbox] = useState<number | null>(null)
+  const { toast } = useToast()
   const saved = venue ? isSaved(venue.id) : false
   usePageTitle(venue ? venue.name : 'Venue')
 
@@ -75,8 +79,7 @@ export default function Venue() {
         await navigator.share({ title: venue?.name, url })
       } else {
         await navigator.clipboard.writeText(url)
-        setShareToast(true)
-        setTimeout(() => setShareToast(false), 2200)
+        toast('Link copied')
       }
     } catch { /* user cancelled share / clipboard blocked — no false toast */ }
   }
@@ -157,16 +160,11 @@ export default function Venue() {
   )
 
   if (!venue) {
+    if (venuesLoading) return <HeroSkeleton />
     return (
       <div className="max-w-wrap mx-auto px-10 text-center py-20 px-5 text-ink-soft" style={{ paddingTop: 80 }}>
-        {venuesLoading ? (
-          <h3 className="text-xl text-ink mb-2">Loading venue…</h3>
-        ) : (
-          <>
-            <h3 className="text-xl text-ink mb-2">Venue not found</h3>
-            <Link to="/search" className="font-semibold text-[13px] text-brand hover:underline">Back to all venues</Link>
-          </>
-        )}
+        <h3 className="text-xl text-ink mb-2">Venue not found</h3>
+        <Link to="/search" className="font-semibold text-[13px] text-brand hover:underline">Back to all venues</Link>
       </div>
     )
   }
@@ -220,16 +218,23 @@ export default function Venue() {
           </div>
           <div className="flex gap-1.5 relative">
             <button onClick={onShare} className="py-2 px-3.5 rounded-xl border border-line-strong bg-white font-semibold text-[13.5px] text-ink transition-colors duration-150 hover:bg-tint inline-flex items-center gap-1.5"><Share size={16} /> Share</button>
+            {venue?.isHostListing && (
             <button onClick={onSave} className={`py-2 px-3.5 rounded-xl border border-line-strong bg-white font-semibold text-[13.5px] transition-colors duration-150 hover:bg-tint inline-flex items-center gap-1.5 ${saved ? 'text-brand' : 'text-ink'}`}>
               <Heart size={16} fill={saved ? 'var(--brand)' : 'none'} /> {saved ? 'Saved' : 'Save'}
             </button>
-            {shareToast && <span className="absolute top-full right-0 mt-1.5 bg-ink text-white text-[13px] py-2 px-3.5 rounded-full shadow-pop whitespace-nowrap" style={{ animation: 'toast-in .25s ease-out' }}>Link copied</span>}
+            )}
           </div>
         </div>
 
         <div className={galleryClass}>
           {venue.images.slice(0, 5).map((src, i) => (
-            <div key={i} className={`overflow-hidden ${i === 0 ? (venue.images.length <= 2 ? '' : 'row-span-2') : ''} ${venue.images.length === 4 && i === 1 ? 'col-span-2' : ''}`}>
+            <button
+              key={i}
+              type="button"
+              onClick={() => setLightbox(i)}
+              aria-label={`Open photo ${i + 1}`}
+              className={`overflow-hidden p-0 border-0 bg-transparent block w-full h-full cursor-zoom-in ${i === 0 ? (venue.images.length <= 2 ? '' : 'row-span-2') : ''} ${venue.images.length === 4 && i === 1 ? 'col-span-2' : ''}`}
+            >
               <img
                 src={withWidth(src, i === 0 ? 1200 : 600)}
                 alt={`${venue.name} ${i + 1}`}
@@ -243,9 +248,45 @@ export default function Venue() {
                 onError={(e) => { e.currentTarget.style.display = 'none' }}
                 className="w-full h-full object-cover transition-[filter] duration-200 hover:brightness-[0.94]"
               />
-            </div>
+            </button>
           ))}
         </div>
+
+        <Modal
+          open={lightbox !== null}
+          onOpenChange={(o) => { if (!o) setLightbox(null) }}
+          size="lg"
+        >
+          {lightbox !== null && venue.images[lightbox] && (
+            <div className="relative -m-6">
+              <img
+                src={withWidth(venue.images[lightbox], 1600)}
+                alt={`${venue.name} ${lightbox + 1}`}
+                className="w-full max-h-[82vh] object-contain bg-ink rounded-lg"
+              />
+              {venue.images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Previous photo"
+                    onClick={() => setLightbox((l) => (l === null ? l : (l + venue.images.length - 1) % venue.images.length))}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 backdrop-blur grid place-items-center text-ink hover:bg-white transition-colors shadow-card"
+                  >
+                    <ChevronLeft size={22} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next photo"
+                    onClick={() => setLightbox((l) => (l === null ? l : (l + 1) % venue.images.length))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 backdrop-blur grid place-items-center text-ink hover:bg-white transition-colors shadow-card"
+                  >
+                    <ChevronRight size={22} />
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </Modal>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 lg:gap-[60px] py-[38px] items-start">
           <div>
@@ -282,7 +323,7 @@ export default function Venue() {
               {realCount > 0 ? (
                 <>
                   <h2 className="text-xl font-bold mb-3.5"><Star size={18} className="text-gold fill-gold inline-block align-[-3px]" /> <span className="font-mono">{realAvg}</span> · {realCount} review{realCount > 1 ? 's' : ''}</h2>
-                  <div className="grid grid-cols-2 gap-x-10 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-6">
                     {realReviews.map((r) => (
                       <div key={r.id}>
                         <div className="flex items-center gap-3">
@@ -302,7 +343,7 @@ export default function Venue() {
                 <>
                   <h2 className="text-xl font-bold mb-3.5"><Star size={18} className="text-gold fill-gold inline-block align-[-3px]" /> <span className="font-mono">{shownRating}</span> · {shownCount} reviews</h2>
                   <p className="text-ink-soft text-sm mb-[18px]">Sample reviews shown for this preview. Real guest reviews appear here once a venue has hosted events.</p>
-                  <div className="grid grid-cols-2 gap-x-10 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-6">
                     {REVIEWS.map((r) => (
                       <div key={r.name}>
                         <div className="flex items-center gap-3">
@@ -411,7 +452,7 @@ export default function Venue() {
         {related.length > 0 && (
           <section className="py-[26px] border-t border-line">
             <h2 className="text-xl font-bold mb-[18px]">{relatedTitle}</h2>
-            <div className="grid">
+            <div className="venue-grid">
               {related.map((v) => <VenueCard key={v.id} venue={v} />)}
             </div>
           </section>

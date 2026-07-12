@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus, Trash2, MapPin, Users, Clock, CalendarCheck, Check, X, Inbox, ChevronLeft, ChevronRight, Plane, Pencil, Eye, EyeOff, ExternalLink, StickyNote } from 'lucide-react'
 import Footer from '../components/Footer'
+import { DashboardSkeleton } from '../components/Skeleton'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 
 const Messages = lazy(() => import('./Messages'))
 import { useAuth } from '../context/AuthContext'
@@ -47,6 +49,7 @@ export default function HostDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const [month, setMonth] = useState<Date>(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1) })
 
   // Keep the active tab in sync with ?tab= (both directions).
@@ -81,10 +84,6 @@ export default function HostDashboard() {
 
   const onDelete = async (id: string) => {
     const active = requests.filter((r) => r.venue_id === id && r.status !== 'cancelled')
-    const msg = active.length
-      ? `This listing has ${active.length} active booking${active.length > 1 ? 's' : ''}. Deleting it will cancel ${active.length > 1 ? 'them' : 'it'}. Delete anyway?`
-      : 'Delete this listing? This cannot be undone.'
-    if (!window.confirm(msg)) return
     setError('')
     const prevVenues = venues
     const prevRequests = requests
@@ -179,6 +178,14 @@ export default function HostDashboard() {
     .filter((r) => r.status === 'confirmed' && (!r.event_date || r.event_date > todayStr))
     .sort(byDate)
 
+  // Confirm-dialog copy for the pending delete (mirrors onDelete's active count).
+  const pendingDeleteActive = pendingDelete
+    ? requests.filter((r) => r.venue_id === pendingDelete && r.status !== 'cancelled').length
+    : 0
+  const deleteBody = pendingDeleteActive
+    ? `This listing has ${pendingDeleteActive} active booking${pendingDeleteActive > 1 ? 's' : ''}. Deleting it will cancel ${pendingDeleteActive > 1 ? 'them' : 'it'}.`
+    : 'This cannot be undone.'
+
   // Full history for the Bookings tab, filtered by status.
   const isCompleted = (r: BookingRow) => r.status === 'confirmed' && !!r.event_date && r.event_date < todayStr
   const bookingsList = requests
@@ -194,8 +201,8 @@ export default function HostDashboard() {
     <>
       {/* Host workspace nav */}
       <div className="relative z-[35] bg-white border-b border-line">
-        <div className="max-w-wrap mx-auto px-10 flex items-center justify-between h-[60px] gap-4">
-          <div className="flex gap-1">
+        <div className="max-w-wrap mx-auto px-10 flex flex-col items-start gap-3 py-2 md:flex-row md:items-center md:justify-between md:h-[60px] md:py-0">
+          <div className="flex flex-wrap gap-1">
             {TABS.map((t) => (
               <button key={t.id} className={`py-2 px-3.5 rounded-full font-semibold text-[15px] transition-colors duration-150 ${tab === t.id ? 'text-ink bg-tint' : 'text-ink-soft hover:bg-tint hover:text-ink'}`} onClick={() => changeTab(t.id)}>{t.label}</button>
             ))}
@@ -219,7 +226,7 @@ export default function HostDashboard() {
           </div>
         )}
         {loading || authLoading ? (
-          <div className="text-center py-[60px] px-5 text-ink-soft"><p>Loading your dashboard…</p></div>
+          <DashboardSkeleton />
         ) : (
           <>
             {/* ---------- TODAY ---------- */}
@@ -308,7 +315,7 @@ export default function HostDashboard() {
                   <h1 className="text-[28px] font-extrabold m-0">Your listings</h1>
                 </div>
                 {venues.length ? (
-                  <div className="grid">
+                  <div className="venue-grid">
                     {venues.map((v) => (
                       <div className="border border-line rounded-lg overflow-hidden" key={v.id}>
                         <Link to={`/host/edit/${v.id}`} className="block relative aspect-[3/2] rounded-none overflow-hidden bg-gradient border-b border-line">
@@ -340,7 +347,7 @@ export default function HostDashboard() {
                             {v.status === 'live' && (
                               <Link to={`/venue/${v.id}`} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft py-1.5 px-2.5 rounded-lg border border-line-strong bg-white transition-colors duration-150 hover:bg-tint hover:text-ink"><ExternalLink size={14} /> View</Link>
                             )}
-                            <button className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#a01230] py-1.5 px-2.5 rounded-lg border border-[#f1c9d2] bg-white transition-colors duration-150 hover:bg-[#fdecef]" onClick={() => onDelete(v.id)} disabled={busyId === v.id}><Trash2 size={14} /> Delete</button>
+                            <button className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#a01230] py-1.5 px-2.5 rounded-lg border border-[#f1c9d2] bg-white transition-colors duration-150 hover:bg-[#fdecef]" onClick={() => setPendingDelete(v.id)} disabled={busyId === v.id}><Trash2 size={14} /> Delete</button>
                           </div>
                         </div>
                       </div>
@@ -369,6 +376,15 @@ export default function HostDashboard() {
           </>
         )}
       </main>
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(o) => { if (!o) setPendingDelete(null) }}
+        onConfirm={async () => { const id = pendingDelete; setPendingDelete(null); if (id) await onDelete(id) }}
+        title="Delete this listing?"
+        body={deleteBody}
+        confirmLabel="Delete"
+        destructive
+      />
       <Footer />
     </>
   )
@@ -429,7 +445,7 @@ function CalendarTab({ month, setMonth, requests }: { month: Date; setMonth: (d:
           <button onClick={() => setMonth(new Date(year, m + 1, 1))} aria-label="Next month" className="w-[38px] h-[38px] border border-line-strong rounded-[10px] grid place-items-center text-ink transition-colors duration-150 hover:bg-tint"><ChevronRight size={18} /></button>
         </div>
       </div>
-      <div className="grid grid-cols-7 border border-line rounded overflow-hidden bg-line gap-px">
+      <div className="overflow-x-auto -mx-1 px-1"><div className="grid grid-cols-7 min-w-[640px] border border-line rounded overflow-hidden bg-line gap-px">
         {DOW.map((d) => <div key={d} className="bg-white p-2.5 text-center text-xs font-bold text-ink-soft uppercase tracking-[0.04em]">{d}</div>)}
         {cells.map((d, i) => {
           if (d === null) return <div className="bg-[#fcfbfd] min-h-[104px] p-2" key={'e' + i} />
@@ -447,6 +463,7 @@ function CalendarTab({ month, setMonth, requests }: { month: Date; setMonth: (d:
             </div>
           )
         })}
+      </div>
       </div>
       <div className="flex gap-5 mt-3.5 text-[13px] text-ink-soft">
         <span className="inline-flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-full inline-block bg-[#e0a32e]" /> Requested</span>

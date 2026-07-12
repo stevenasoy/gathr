@@ -4,25 +4,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        canvas: 'var(--bg)',
-        surface: 'var(--surface)',
+        canvas: 'rgb(250 249 246 / <alpha-value>)',
+        surface: 'rgb(255 255 255 / <alpha-value>)',
         ink: {
-          DEFAULT: 'var(--ink)',
-          soft: 'var(--ink-soft)',
-          faint: 'var(--ink-faint)',
+          DEFAULT: 'rgb(18 16 22 / <alpha-value>)',
+          soft: 'rgb(94 90 101 / <alpha-value>)',
+          faint: 'rgb(152 148 160 / <alpha-value>)',
         },
         brand: {
-          DEFAULT: 'var(--brand)',
-          press: 'var(--brand-press)',
-          soft: 'var(--brand-soft)',
+          DEFAULT: 'rgb(194 90 30 / <alpha-value>)',
+          press: 'rgb(163 71 18 / <alpha-value>)',
+          soft: 'rgb(252 245 240 / <alpha-value>)',
         },
-        'brand-2': 'var(--brand-2)',
-        gold: 'var(--gold)',
+        'brand-2': 'rgb(28 77 56 / <alpha-value>)',
+        gold: 'rgb(223 158 34 / <alpha-value>)',
         line: {
-          DEFAULT: 'var(--line)',
-          strong: 'var(--line-strong)',
+          DEFAULT: 'rgb(232 229 222 / <alpha-value>)',
+          strong: 'rgb(208 203 192 / <alpha-value>)',
         },
-        tint: 'var(--tint)',
+        tint: 'rgb(243 241 235 / <alpha-value>)',
       },
       borderRadius: {
         DEFAULT: 'var(--radius)',

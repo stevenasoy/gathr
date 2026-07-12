@@ -82,6 +82,8 @@ h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; margin: 0; letter-spacing: -
 }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
+.wrap { @apply max-w-wrap mx-auto px-10; }
+
 /* ============================================================
    Components (Tailwind @apply)
    ============================================================ */
@@ -127,12 +129,12 @@ h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; margin: 0; letter-spacing: -
 }
 .pill:focus-within { @apply border-brand shadow-[0_0_0_4px_rgba(194,90,30,0.12)] shadow-bar; }
 .pill-seg {
-  @apply flex flex-col justify-center px-[22px] py-3.5 text-left relative rounded-full transition-colors duration-150 flex-1 min-w-[110px];
+  @apply flex flex-col justify-center px-4 xl:px-[22px] py-3.5 text-left relative rounded-full transition-colors duration-150 flex-1;
 }
-.pill-seg:nth-child(1) { @apply flex-[1.4] min-w-[150px]; }
-.pill-seg:nth-child(2) { @apply flex-[1.2] min-w-[130px]; }
-.pill-seg:nth-child(3) { @apply flex-1 min-w-[110px]; }
-.pill-seg:nth-child(4) { @apply flex-[0.9] min-w-[90px]; }
+.pill-seg:nth-child(1) { @apply flex-[1.4] min-w-[110px] xl:min-w-[150px]; }
+.pill-seg:nth-child(2) { @apply flex-[1.2] min-w-[100px] xl:min-w-[130px]; }
+.pill-seg:nth-child(3) { @apply flex-1 min-w-[85px] xl:min-w-[110px]; }
+.pill-seg:nth-child(4) { @apply flex-[0.9] min-w-[75px] xl:min-w-[90px]; }
 .pill-seg:hover { @apply bg-brand-soft; }
 .pill-seg:focus-within { @apply bg-tint; }
 .pill-seg + .pill-seg::before {
@@ -161,16 +163,16 @@ h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; margin: 0; letter-spacing: -
 .pill-seg-caret { @apply absolute right-4 top-[58%] -translate-y-1/2 text-ink-soft pointer-events-none opacity-50 transition-opacity duration-150; }
 .pill-seg--select:hover .pill-seg-caret, .pill-seg--select:focus-within .pill-seg-caret { @apply opacity-100; }
 .pill-go {
-  @apply self-center my-1.5 mr-1.5 ml-0 inline-flex items-center gap-2 bg-brand text-white font-bold py-3.5 px-[22px] rounded-full transition-all duration-200;
+  @apply self-center my-1.5 mr-1.5 ml-0 inline-flex items-center justify-center gap-2 bg-brand text-white font-bold rounded-full transition-all duration-200 w-11 h-11 xl:w-auto xl:h-auto xl:py-3.5 xl:px-[22px] shrink-0;
 }
 .pill-go:hover { @apply bg-brand-press shadow-[0_4px_12px_rgba(194,90,30,0.35)]; }
 .pill-go:active { @apply scale-[0.97]; }
 .pill-go span { @apply text-[15px]; }
 
 /* Grid + cards */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 26px 22px; }
-.grid.rail { @apply grid-flow-col grid-cols-none auto-cols-[minmax(248px,1fr)] overflow-x-auto pb-1.5; scrollbar-width: none; }
-.grid.rail::-webkit-scrollbar { @apply hidden; }
+.venue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 26px 22px; }
+.venue-grid.rail { @apply grid-flow-col grid-cols-none auto-cols-[minmax(248px,1fr)] overflow-x-auto pb-1.5; scrollbar-width: none; }
+.venue-grid.rail::-webkit-scrollbar { @apply hidden; }
 
 .card { @apply block; }
 .card-media { @apply relative aspect-[3/2] rounded overflow-hidden bg-gradient border border-line; }
@@ -496,6 +498,13 @@ h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; margin: 0; letter-spacing: -
 .spin { @apply animate-spin; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Skeletons — shimmer placeholders for known-shape loading (lists, detail).
+   Brief/boolean loading (route chunks, auth boot, form submits) uses .spin. */
+.skeleton { position: relative; overflow: hidden; border-radius: 8px; background: rgba(18,16,22,0.06); }
+.skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); animation: shimmer 1.4s ease-in-out infinite; }
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+
 /* Stars + reviews */
 .stars { @apply inline-flex gap-0.5; }
 .stars .star { @apply text-line-strong; }
@@ -584,12 +593,42 @@ h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; margin: 0; letter-spacing: -
 .cta-row { @apply inline-flex gap-2.5 flex-wrap justify-center; }
 .cta-row .host-link { @apply bg-tint; }
 
-/* Toast */
-.toast {
-  @apply absolute top-full right-0 mt-1.5 bg-ink text-white text-[13px] py-2 px-3.5 rounded-full shadow-pop whitespace-nowrap;
-  animation: toast-in .25s ease-out;
-}
+/* Toast system (Radix Toast). Themed cards, bottom-right, swipe-to-dismiss. */
+.toast-viewport { position: fixed; bottom: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 10px; width: max-content; max-width: min(360px, calc(100vw - 40px)); margin: 0; padding: 0; list-style: none; pointer-events: none; }
+.toast-card { display: flex; flex-direction: column; gap: 2px; border-radius: 14px; padding: 11px 16px; box-shadow: var(--shadow-pop); font-size: 13px; font-weight: 600; color: #fff; pointer-events: auto; }
+.toast-card[data-state="open"] { animation: toast-in .25s ease-out; }
+.toast-card[data-state="closed"] { animation: toast-out .18s ease-in forwards; }
+.toast-card[data-swipe="move"] { transform: translateX(var(--radix-toast-swipe-move-x)); }
+.toast-card[data-swipe="cancel"] { transform: translateX(0); transition: transform .15s ease-out; }
+.toast-card[data-swipe="end"] { animation: toast-swipe-out .2s ease-out forwards; }
+.toast-title { margin: 0; font-size: 13.5px; font-weight: 700; line-height: 1.25; }
+.toast-desc { margin: 0; font-size: 12.5px; font-weight: 500; opacity: 0.88; line-height: 1.3; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(-4px); } }
+@keyframes toast-swipe-out { to { opacity: 0; transform: translateX(calc(100% + 20px)); } }
+@media (prefers-reduced-motion: reduce) {
+  .toast-card[data-state="open"], .toast-card[data-state="closed"], .toast-card[data-swipe="end"] { animation: none; }
+}
+
+/* Modal / dialog (Radix Dialog + AlertDialog). Headless primitives — we own
+   the look via our tokens. Shared by Modal, ConfirmDialog, and Drawer.
+   z-index sits above the sticky header (z-100) and its dropdown (z-200);
+   toasts (z-300) stay above these so a toast fired mid-modal is visible. */
+.dialog-overlay { position: fixed; inset: 0; z-index: 250; background: rgba(18,16,22,0.5); backdrop-filter: blur(2px); }
+.dialog-overlay[data-state="open"] { animation: fade-in .18s ease-out; }
+.dialog-content { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 251; width: calc(100% - 2rem); max-height: calc(100dvh - 2rem); overflow-y: auto; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 16px; box-shadow: var(--shadow-pop); padding: 24px; }
+.dialog-content[data-state="open"] { animation: dialog-in .22s cubic-bezier(0.16,1,0.3,1); }
+.dialog-content:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+/* Drawer: same Radix Dialog primitive, styled as a right-side slide panel. */
+.drawer-content { position: fixed; top: 0; right: 0; bottom: 0; z-index: 251; width: min(360px, 92vw); max-height: 100dvh; display: flex; flex-direction: column; background: var(--surface); box-shadow: var(--shadow-pop); padding: 18px 22px 22px; }
+.drawer-content[data-state="open"] { animation: drawer-in .28s cubic-bezier(0.2,0.7,0.2,1); }
+.drawer-content[data-state="closed"] { animation: drawer-out .22s ease-in forwards; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialog-in { from { opacity: 0; transform: translate(-50%, calc(-50% - 8px)); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@keyframes drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes drawer-out { to { transform: translateX(100%); } }
+@keyframes dropdown-in { from { opacity: 0; transform: scale(0.95) translateY(-8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .dialog-overlay[data-state="open"], .dialog-content[data-state="open"], .drawer-content[data-state="open"], .drawer-content[data-state="closed"] { animation: none; } }
 
 /* Footer */
 .foot { @apply bg-white border-t border-line mt-14; }
@@ -749,139 +788,21 @@ select.select-sort {
 /* ============================================================
    Responsive
    ============================================================ */
-@media (max-width: 1080px) {
-  .detail-body { @apply grid-cols-1 gap-8; }
-  .booking { @apply relative top-0; }
-  .results-layout { @apply grid-cols-1 gap-5; }
-  .results-layout.filters-closed .filters { @apply hidden; }
-  .results-layout.filters-open .filters { @apply block relative top-0; }
-}
-
-@media (max-width: 1024px) {
-  .how-grid, .content-grid { @apply grid-cols-2; }
-  .cities-grid { @apply grid-cols-2; }
-  .stat-row { @apply grid-cols-4; }
-  .sitemap-grid { @apply grid-cols-3; }
-  .sitemap-venues { @apply col-span-3; }
-}
-
 @media (max-width: 860px) {
-  .wrap { @apply px-5; }
-  .hdr-mid { @apply hidden; }
-  .hdr-right a.host-link { @apply hidden; }
-  .hdr-row { @apply gap-3; }
-  .searchbar-row { @apply flex-col items-stretch; }
-  .searchbar-row .select-sort { @apply self-start; }
-  .hero-search .pill, .searchbar-row .pill { @apply flex-wrap rounded-lg w-full; }
+  .wrap, .max-w-wrap.px-10 { @apply px-5; }
+  .pill { @apply flex-wrap rounded-lg w-full; }
   .pill-seg { @apply flex-[1_1_45%]; }
   .pill-seg + .pill-seg::before { @apply hidden; }
-  .pill-go { @apply w-[calc(100%-12px)] mx-1.5 justify-center; }
-  .gallery { @apply grid-cols-1 aspect-auto my-3 mb-5; }
-  .gallery .g-img { @apply aspect-[16/10]; }
-  .gallery .g-img:not(.g-main):nth-child(n+3) { @apply hidden; }
-  .gallery .g-main { @apply row-auto; }
-  .reviews-grid, .amenity-grid { @apply grid-cols-1; }
-  .foot-cols { @apply grid-cols-2; }
-  .how-grid { @apply grid-cols-1; }
-  .cities-grid { @apply grid-cols-2; }
-  .content-grid { @apply grid-cols-1; }
-  .stories-grid { @apply grid-cols-1; }
-  .stat-row { @apply grid-cols-2; }
-  .contact-layout { @apply grid-cols-1; }
-  .sitemap-grid { @apply grid-cols-2; }
-  .sitemap-venues { @apply col-span-2; }
-  .banner-card { @apply p-5; }
-  .banner-card .btn-primary { @apply w-full; }
-}
-
-@media (max-width: 1080px) {
-  .how-grid, .content-grid { @apply grid-cols-2; }
-  .cities-grid { @apply grid-cols-2; }
-  .content-grid { @apply grid-cols-2; }
-  .stat-row { @apply grid-cols-4; }
-  .sitemap-grid { @apply grid-cols-3; }
-  .sitemap-venues { @apply col-span-3; }
-}
-
-@media (max-width: 1024px) {
-  .hero { @apply min-h-[auto] h-auto; }
-  .hero-inner { @apply pt-28 pb-16; }
-  .hero h1 { @apply text-[42px] leading-[1.08] mb-[18px]; }
-  .hero p { @apply text-lg mb-8; }
-  .hero-mosaic { @apply block mt-8 w-full; }
-  .hero-mosaic-col:nth-child(2) { @apply hidden; }
-  .hero-mosaic-col:first-child { @apply block; }
-  .hero-img-box:nth-child(2) { @apply hidden; }
-  .hero-img-box { @apply aspect-video max-w-[580px] mx-auto; }
-  .how-grid, .content-grid { @apply grid-cols-3; }
-  .foot-cta-in { @apply flex-col items-center text-center py-[38px] gap-5; }
-  .foot-cta h3 { @apply text-[26px] max-w-none; }
-  .foot-cta p { @apply max-w-none mt-1.5; }
-  .foot-cols { @apply grid-cols-2 gap-x-6 gap-y-9; }
-}
-
-@media (max-width: 860px) {
+  .pill-go { @apply w-[calc(100%-12px)] h-auto py-3 px-5 mx-1.5 justify-center; }
   input, select, textarea { @apply text-base; }
 }
 
-@media (max-width: 720px) {
-  .how-grid, .content-grid { @apply grid-cols-1; }
-}
-
-@media (max-width: 600px) {
-  .booking-row { @apply flex-col items-start gap-3; }
-  .booking-row-side { @apply flex-row items-center gap-3.5 w-full justify-between; }
-  .host-nav-right { @apply flex-col items-stretch w-full; }
-  .host-nav-right button, .host-nav-right a { @apply justify-center text-center w-full; }
-  .hero-inner { @apply pt-24 pb-10; }
-  .hero h1 { @apply text-[32px] leading-[1.1] mb-3.5; }
-  .hero p { @apply text-base mb-6; }
-  .hero-trust { @apply mt-6 gap-2 text-xs; }
-}
-
 @media (max-width: 500px) {
-  .wrap { @apply px-4; }
-  .hdr { @apply w-[calc(100%-16px)] top-2 my-2 mx-auto; }
-  .hdr-row { @apply px-3 gap-2; }
-  .hdr-right .icon-btn { @apply hidden; }
-  .hero-search .pill, .searchbar-row .pill { @apply flex-col rounded-lg; }
+  .wrap, .max-w-wrap.px-10 { @apply px-4; }
+  .pill { @apply flex-col rounded-lg; }
   .pill-seg { @apply flex-[1_1_100%] w-full py-3 px-5 border-b border-line-strong rounded-none; }
   .pill-seg:last-of-type { @apply border-b-0; }
-  .pill-go { @apply w-[calc(100%-24px)] m-3 p-3 px-5; }
+  .pill-go { @apply w-[calc(100%-24px)] h-auto m-3 p-3 px-5; }
   .pill-seg + .pill-seg::before { @apply hidden; }
   .pill-seg-caret { @apply right-5; }
-  .form-card { @apply p-6 px-4 border-0 shadow-none bg-transparent; }
-  .wizard-body { @apply py-6 px-4 pb-[110px]; }
-  .cities-grid { @apply grid-cols-1; }
-  .foot-about { @apply flex flex-col items-center text-center; }
-  .foot-about .logo { @apply justify-center; }
-  .foot-cols { @apply grid-cols-1 gap-6 text-center; }
-  .foot-about p { @apply max-w-none; }
-  .foot-cta-in { @apply py-8; }
-  .foot-bottom { @apply flex-col items-center text-center gap-4; }
-  .sitemap-grid { @apply grid-cols-1; }
-  .sitemap-venues { @apply col-span-1; }
-  .stat-row { @apply grid-cols-1; }
-}
-
-@media (max-width: 480px) {
-  .type-grid { @apply grid-cols-1; }
-  .photo-thumbs { @apply grid-cols-2; }
-}
-
-@media (max-width: 450px) {
-  .booking { @apply p-4; }
-  .booking-row2 { @apply grid-cols-1; }
-  .booking-row2 .booking-field:first-child { @apply border-r-0 border-b border-line-strong; }
-}
-
-@media (max-width: 760px) {
-  .msg-layout { @apply grid-cols-1 h-auto; }
-  .msg-threads { @apply max-h-[220px] border-r-0 border-b border-line; }
-  .msg-thread-view { @apply min-h-[420px]; }
-  .host-nav-row { @apply h-auto flex-col items-stretch py-3 gap-3; }
-  .host-tabs { @apply overflow-x-auto; scrollbar-width: none; }
-  .host-tabs::-webkit-scrollbar { @apply hidden; }
-  .cal-cell { @apply min-h-[72px] p-1; }
-  .cal-event { @apply text-[9px] py-0.5 px-1; }
 }

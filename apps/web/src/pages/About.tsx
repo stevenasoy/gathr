@@ -30,7 +30,7 @@ export default function About() {
 
         <div className="wrap page-body">
           <section>
-            <div className="grid grid-cols-4 gap-[18px]">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-[18px]">
               {STATS.map((s) => (
                 <div className="p-6 border border-line rounded-lg bg-surface text-center" key={s.label}>
                   <b className="block text-[30px] font-extrabold bg-gradient bg-clip-text text-transparent">{s.n}</b>
@@ -42,7 +42,7 @@ export default function About() {
 
           <section>
             <h2 className="text-2xl font-extrabold mb-[18px]">What we believe</h2>
-            <div className="grid grid-cols-3 gap-[18px]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-[18px]">
               {VALUES.map((v) => (
                 <div className="p-6 border border-line rounded-lg bg-surface transition-all duration-150 hover:border-line-strong hover:-translate-y-0.5 hover:shadow-bar" key={v.title}>
                   <h3 className="text-[17px] font-bold mb-1.5">{v.title}</h3>

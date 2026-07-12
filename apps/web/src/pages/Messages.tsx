@@ -3,6 +3,7 @@ import type { FormEvent, ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Send, MessageSquare } from 'lucide-react'
 import Footer from '../components/Footer'
+import { ThreadListSkeleton } from '../components/Skeleton'
 import { useAuth } from '../context/AuthContext'
 import { listBookings, listRequestsForVenues } from '../lib/bookings'
 import { fetchMyVenues } from '../lib/venues'
@@ -194,15 +195,15 @@ export default function Messages({ role = 'guest', embedded = false }: MessagesP
   }
 
   const inbox = (
-    <div className="grid grid-cols-[300px_1fr] gap-0 border border-line rounded-lg overflow-hidden h-[560px] bg-white">
-      <aside className="border-r border-line overflow-y-auto">
+    <div className="grid grid-cols-1 sm:grid-cols-[300px_1fr] gap-0 border border-line rounded-lg overflow-hidden h-[600px] sm:h-[560px] bg-white">
+      <aside className="border-b border-line sm:border-r sm:border-b-0 overflow-y-auto">
         {error ? (
           <div className="text-ink-soft text-[15px]" style={{ padding: 16 }}>
             <p style={{ marginBottom: 10 }}>{error}</p>
             <button className={baseBtn} style={{ width: 'auto', padding: '10px 18px' }} onClick={() => location.reload()}>Retry</button>
           </div>
         ) : loading ? (
-          <p className="text-ink-soft text-[15px]" style={{ padding: 16 }}>Loading…</p>
+          <ThreadListSkeleton count={5} />
         ) : threads.length === 0 ? (
           <p className="text-ink-soft text-[15px]" style={{ padding: 16 }}>No conversations yet. {role === 'host' ? 'They start when a guest messages or requests one of your venues.' : 'Message a venue or request one to start a conversation.'}</p>
         ) : threads.map((t) => {

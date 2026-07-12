@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, User, Building2 } from 'lucide-react'
 import Footer from '../components/Footer'
+import { FormSkeleton } from '../components/Skeleton'
 import PhotoManager from '../components/PhotoManager'
 import { useAuth } from '../context/AuthContext'
 import { useVenues } from '../context/VenuesContext'
@@ -79,7 +80,12 @@ export default function HostEdit() {
     setList(list.includes(val) ? list.filter((x) => x !== val) : [...list, val])
 
   if (authLoading || loading) {
-    return <main className="min-h-[70vh] grid place-items-center py-[60px] px-5"><p className="text-ink-soft">Loading…</p></main>
+    return (
+      <>
+        <FormSkeleton rows={5} />
+        <Footer />
+      </>
+    )
   }
   if (!user) {
     return (
