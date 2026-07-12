@@ -29,7 +29,7 @@ The refresh token **never reaches browser JavaScript**. Configure Supabase Auth 
 
 ### Content-Security-Policy
 
-Do **not** rely on the `index.html` meta tag for CSP in production. The repo ships no meta CSP because it blocks Vite dev HMR and Google Fonts. Enforce CSP via the production server/edge response header. A starting policy is in `apps/web/Dockerfile` / nginx config (add `Content-Security-Policy` header matching your origins and Supabase project ref).
+Do **not** rely on the `index.html` meta tag for CSP in production. The repo ships no meta CSP because it blocks Vite dev HMR and Google Fonts. Enforce CSP via the production server/edge response header. The bundled nginx config already sets a CSP in `apps/web/nginx.conf:35` — review it and replace `https://*.supabase.co` with your exact Supabase project origin before deploying.
 
 ## Schema migrations
 

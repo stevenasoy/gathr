@@ -140,7 +140,7 @@ export default function Venue() {
   // early return. When venue is not loaded yet, the arrays are empty.
   const ownListing = !!user && venue?.ownerId === user.id
   const venueId = venue?.id ?? ''
-  const venueTypes = venue?.types ?? []
+  const venueTypes = useMemo(() => venue?.types ?? [], [venue?.types])
   const typeLabels = useMemo(
     () => venueTypes.map((t) => CATEGORIES.find((c) => c.id === t)?.label).filter(Boolean),
     [venueTypes],
