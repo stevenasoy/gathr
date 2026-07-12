@@ -28,9 +28,15 @@ drop index if exists public.venues_status_idx;
 -- 2. Materialize review stats view (M13 + L28)
 -- ============================================================
 -- Refresh the existing plain view as a materialized view with a unique index.
--- Drop both forms in case a previous partial run left it as a materialized view.
-drop view if exists public.venue_review_stats;
-drop materialized view if exists public.venue_review_stats;
+-- Use a DO block to drop whatever form currently exists without erroring on the
+-- wrong object type.
+do $$
+begin
+  drop view if exists public.venue_review_stats;
+exception when sqlstate '42809' then
+  -- Object exists but is a materialized view, not a plain view.
+  drop materialized view if exists public.venue_review_stats;
+end $$;
 
 create materialized view public.venue_review_stats as
 select
