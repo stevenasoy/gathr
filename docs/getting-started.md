@@ -54,10 +54,13 @@ Apply the schema files in order in the Supabase SQL Editor. Each is safe to re-r
 ### 5. Start developing
 
 ```bash
-# Web app (http://localhost:5173)
+# Web + API together (http://localhost:5173 + http://localhost:3001)
 npm run dev
 
-# API server (http://localhost:3001)
+# Web app only (http://localhost:5173)
+npm run dev:web
+
+# API server only (http://localhost:3001)
 npm run dev:api
 
 # Interactive demo
@@ -66,11 +69,12 @@ npm run dev:demo
 
 ## Available Scripts
 
-| Command             | Description                    |
-| ------------------- | ------------------------------ |
-| `npm run dev`       | Start the web app              |
-| `npm run dev:api`   | Start the API server           |
-| `npm run dev:demo`  | Start the interactive demo     |
+| Command             | Description                         |
+| ------------------- | ----------------------------------- |
+| `npm run dev`       | Start the web app + API together    |
+| `npm run dev:web`   | Start the web app only              |
+| `npm run dev:api`   | Start the API server only           |
+| `npm run dev:demo`  | Start the interactive demo          |
 | `npm run build`     | Build the web app              |
 | `npm run build:all` | Build all apps                 |
 | `npm run lint`      | Lint the web app               |
