@@ -12,10 +12,12 @@ import bookingsRouter from './routes/bookings.js'
 import conversationsRouter from './routes/conversations.js'
 import messagesRouter from './routes/messages.js'
 import reviewsRouter from './routes/reviews.js'
+import authRouter from './routes/auth.js'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 3001
 const isProd = process.env.NODE_ENV === 'production'
+const isTest = process.env.NODE_ENV === 'test'
 
 // --- Security middleware ---
 app.use(helmet())
@@ -47,7 +49,9 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 app.use(morgan(':method :url :status :response-time ms - :req-id', { skip: (req) => req.path === '/api/health' }))
 
 // --- Rate limiting ---
-app.use(rateLimit({
+const noOpRateLimit = (_req: Request, _res: Response, next: NextFunction) => next()
+
+app.use(isTest ? noOpRateLimit : rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
@@ -62,7 +66,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 // Tighter limiter for the public contact form: 3 submissions per 15 minutes
 // per IP. The global 100/15min limiter still applies, but this caps the spam
 // vector on the one unauthenticated write endpoint.
-const contactLimiter = rateLimit({
+const contactLimiter = isTest ? noOpRateLimit : rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 3,
   standardHeaders: true,
@@ -73,7 +77,7 @@ const contactLimiter = rateLimit({
 // Stricter per-user write limiter for authenticated mutation endpoints. Only
 // counts POST/PUT/PATCH/DELETE; read traffic is exempt. Keys on authenticated
 // user id when available, otherwise falls back to IP.
-const writeLimiter = rateLimit({
+const writeLimiter = isTest ? noOpRateLimit : rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
   standardHeaders: true,
@@ -84,6 +88,28 @@ const writeLimiter = rateLimit({
     return userId || (req.ip || req.socket.remoteAddress || 'unknown')
   },
   message: { error: 'Too many writes. Please slow down.' },
+})
+
+// Auth-specific rate limiters. Credential traffic bypassed the global limiter in
+// the previous architecture; now it flows through the API and must be strictly
+// capped per IP + per email to prevent brute-force and signup abuse.
+const authIpLimiter = isTest ? noOpRateLimit : rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => req.ip || req.socket.remoteAddress || 'unknown',
+  message: { error: 'Too many attempts from this network. Please try again later.' },
+})
+
+const authEmailLimiter = isTest ? noOpRateLimit : rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !req.body?.email,
+  keyGenerator: (req: Request) => req.body?.email || req.ip || 'unknown',
+  message: { error: 'Too many attempts for this email. Please try again later.' },
 })
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -110,6 +136,8 @@ app.post('/api/contact', contactLimiter, (req: Request, res: Response, next: Nex
     next(e)
   }
 })
+
+app.use('/api/auth', authIpLimiter, authEmailLimiter, authRouter)
 
 app.use('/api/venues', resolveUser, writeLimiter, venuesRouter)
 app.use('/api/bookings', resolveUser, writeLimiter, bookingsRouter)

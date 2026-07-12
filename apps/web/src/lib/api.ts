@@ -1,12 +1,9 @@
-import { supabase } from './supabase'
+import { setAccessToken } from './supabase'
 
-// Central API client for the Express backend. Replaces the per-helper pattern
-// of `supabase.auth.getSession()` + `fetch` + `throw body.error` so that:
-//   - the Bearer token is attached consistently,
-//   - a 401 triggers one session refresh + retry, then signs the user out
-//     instead of surfacing a raw "Invalid or expired token." error,
-//   - a 503 / "API not configured." is normalized to a friendly message and
-//     never reaches the UI verbatim.
+// Central API client for the Express backend. The session is kept in httpOnly
+// cookies set by /api/auth/*; every request includes credentials so the API can
+// identify the caller. For direct Supabase calls, we also keep a short-lived
+// access token in memory (setAccessToken) which is rotated via the API.
 
 export class ApiError extends Error {
   status: number
@@ -40,45 +37,42 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
-// Fetch an API route with the caller's Supabase access token attached.
-// On 401 (auth required/optional): refresh the session once and retry; if that
-// still fails or there is no refresh token, sign the user out so the UI does
-// not keep firing requests with a dead session.
+async function refreshViaApi(): Promise<string | null> {
+  try {
+    const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
+    if (!res.ok) return null
+    const data = await res.json() as { access_token?: string }
+    if (data.access_token) setAccessToken(data.access_token)
+    return data.access_token || null
+  } catch (e) {
+    console.error('api session refresh failed', e)
+    return null
+  }
+}
+
+// Fetch an API route. The browser sends the httpOnly auth cookies; we also
+// refresh a stale in-memory access token on 401 and retry once.
 export async function apiFetch(path: string, opts: ApiFetchOptions = {}): Promise<Response> {
   const { method = 'GET', body, auth = 'required' } = opts
   const headers: Record<string, string> = {}
   if (body !== undefined) headers['Content-Type'] = 'application/json'
 
-  let token: string | null = null
-  if (auth !== 'none') {
-    if (!supabase) {
-      throw new ApiError(auth === 'required' ? 'Backend not connected.' : FRIENDLY_503, 503)
-    }
-    const session = (await supabase.auth.getSession()).data.session
-    if (session?.access_token) {
-      token = session.access_token
-      headers['Authorization'] = `Bearer ${token}`
-    } else if (auth === 'required') {
-      throw new ApiError('Authentication required.', 401)
-    }
-  }
-
   const init: RequestInit = {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    credentials: 'include',
   }
   let res = await fetch(path, init)
 
-  if (res.status === 401 && auth !== 'none' && token && supabase) {
-    const { data } = await supabase.auth.refreshSession()
-    if (data.session?.access_token) {
-      headers['Authorization'] = `Bearer ${data.session.access_token}`
+  if (res.status === 401 && auth !== 'none') {
+    const fresh = await refreshViaApi()
+    if (fresh) {
       res = await fetch(path, { ...init, headers })
     }
-    if (!data.session?.access_token || res.status === 401) {
-      // Dead session — drop it so the auth context reflects signed-out state.
-      await supabase.auth.signOut()
+    if (res.status === 401 || !fresh) {
+      // Dead session — drop the in-memory token so the UI reflects signed-out.
+      setAccessToken(null)
     }
   }
 
@@ -86,7 +80,7 @@ export async function apiFetch(path: string, opts: ApiFetchOptions = {}): Promis
 }
 
 // Fetch + parse JSON, throwing ApiError with a friendly message on any non-OK
-// response. Use for the common case where a helper just wants the parsed body.
+// response.
 export async function apiJson<T>(path: string, opts: ApiFetchOptions = {}): Promise<T> {
   const res = await apiFetch(path, opts)
   if (!res.ok) throw new ApiError(await readError(res), res.status)

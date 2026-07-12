@@ -12,21 +12,25 @@ const router = Router()
 const VENUE_COLUMNS =
   'id,owner_id,name,city,area,types,capacity,price_per_hour,blurb,amenities,image_urls,host_name,host_type,price_unit,included_hours,status,created_at'
 
+// Public listing view excludes owner_id (M22).
+const VENUE_PUBLIC_COLUMNS =
+  'id,name,city,area,types,capacity,price_per_hour,blurb,amenities,image_urls,host_name,host_type,price_unit,included_hours,status,created_at'
+
 // The insert/update allowlist (name, city, area, types, capacity,
 // price_per_hour, blurb, amenities, image_urls, host_name, host_type,
 // price_unit, included_hours, status) is enforced by CreateVenueSchema in
 // lib/validation.js. Identity (owner_id) and audit columns are excluded — the
 // server pins owner_id to the caller; id/created_at/updated_at are DB-managed.
 
-// GET /api/venues — live venues visible to the caller (RLS-filtered).
+// GET /api/venues — public live venue listings. Uses the venues_live view so
+// anon callers never see owner_id (M22). Authenticated callers still get only
+// live listings here; their own draft/unlisted venues are under /api/venues/my.
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const limit = req.query.limit ? Number(req.query.limit) : 100
-    const offset = req.query.offset ? Number(req.query.offset) : 0
+    const { limit, offset } = parsePagination(req)
     const { data, error } = await (req as AuthedRequest).supabase
-      .from('venues')
-      .select(VENUE_COLUMNS)
-      .eq('status', 'live')
+      .from('venues_live' as any)
+      .select(VENUE_PUBLIC_COLUMNS)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
     if (error) throw error
@@ -61,12 +65,25 @@ router.get('/my', requireAuth, async (req: Request, res: Response, next: NextFun
   }
 })
 
-// GET /api/venues/:id — detail of a venue.
+// GET /api/venues/:id — detail of a venue. Authenticated callers (hosts) use the
+// base table so they can see their own draft/unlisted venues; anonymous callers
+// use the public venues_live view (M22) which excludes owner_id.
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { data, error } = await (req as AuthedRequest).supabase
-      .from('venues')
-      .select(VENUE_COLUMNS)
+    const r = req as AuthedRequest
+    if (r.user) {
+      const { data, error } = await r.supabase
+        .from('venues')
+        .select(VENUE_COLUMNS)
+        .eq('id', req.params.id as string)
+        .single()
+      if (error) throw error
+      res.json(data)
+      return
+    }
+    const { data, error } = await r.supabase
+      .from('venues_live' as any)
+      .select(VENUE_PUBLIC_COLUMNS)
       .eq('id', req.params.id as string)
       .single()
     if (error) throw error

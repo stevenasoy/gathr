@@ -101,6 +101,14 @@ export type Database = {
         Row: { venue_id: string; count: number; avg: number }
         Relationships: []
       }
+      venues_live: {
+        Row: Omit<VenueRow, 'owner_id'>
+        Relationships: []
+      }
+      reviews_public: {
+        Row: Omit<ReviewRow, 'user_id'>
+        Relationships: []
+      }
     }
     Functions: Record<string, never>
     Enums: Record<string, never>

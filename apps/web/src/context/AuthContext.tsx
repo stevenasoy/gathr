@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { User, Session, AuthError } from '@supabase/supabase-js'
-import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { supabase, isSupabaseConfigured, setAccessToken } from '../lib/supabase'
 
 export interface AuthResult {
   data: { user: User | null; session: Session | null } | null
@@ -30,8 +30,6 @@ const asMessage = (e: unknown): { message: string } => ({
   message: e instanceof Error ? e.message : 'Something went wrong. Please try again.',
 })
 
-// supabase-js v2 returns slightly different response shapes for signUp/signIn
-// vs password reset/update. Normalize them into our AuthResult type.
 function authResultFrom(data: unknown, error: unknown): AuthResult {
   if (error) return { data: null, error: asMessage(error) }
   if (data && typeof data === 'object') {
@@ -41,37 +39,70 @@ function authResultFrom(data: unknown, error: unknown): AuthResult {
   return { data: { user: null, session: null }, error: null }
 }
 
+async function apiJson<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+  const { method = 'GET', body } = opts
+  const headers: Record<string, string> = {}
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json'
+  }
+  const res = await fetch(path, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+    credentials: 'include',
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    let message = 'Something went wrong. Please try again.'
+    try {
+      const parsed = JSON.parse(text)
+      if (parsed && typeof parsed.error === 'string') message = parsed.error
+    } catch { /* ignore */ }
+    throw new Error(message)
+  }
+  return res.json() as Promise<T>
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Bootstrap: ask the API for the current session. The refresh token lives in
+  // an httpOnly cookie; the API returns the user + short-lived access token.
   useEffect(() => {
     let active = true
-    if (!supabase) { setLoading(false); return }
-
-    supabase.auth.getSession()
-      .then(({ data }) => { if (active) setUser(data.session?.user ?? null) })
-      .catch((e) => console.error('auth session load failed', e))
-      .finally(() => { if (active) setLoading(false) })
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (active) setUser(session?.user ?? null)
-    })
-    return () => {
-      active = false
-      sub.subscription.unsubscribe()
+    async function load() {
+      if (!supabase) { setLoading(false); return }
+      try {
+        const { user: u, access_token } = await apiJson<{ user: User | null; access_token?: string }>('/api/auth/session')
+        if (active) {
+          setUser(u ?? null)
+          setAccessToken(access_token || null)
+        }
+      } catch (e) {
+        console.error('auth session load failed', e)
+        if (active) {
+          setUser(null)
+          setAccessToken(null)
+        }
+      } finally {
+        if (active) setLoading(false)
+      }
     }
+    load()
+    return () => { active = false }
   }, [])
 
   const signUp = useCallback(async ({ name, email, password }: { name: string; email: string; password: string }): Promise<AuthResult> => {
     if (!supabase) return { data: null, error: NOT_CONFIGURED }
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: name } },
+      const res = await apiJson<{ user: User | null; session?: { access_token: string } | null }>('/api/auth/signup', {
+        method: 'POST',
+        body: { email, password, name },
       })
-      return authResultFrom(data, error)
+      setUser(res.user ?? null)
+      setAccessToken(res.session?.access_token || null)
+      return authResultFrom(res, null)
     } catch (e) {
       return { data: null, error: asMessage(e) }
     }
@@ -80,8 +111,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async ({ email, password }: { email: string; password: string }): Promise<AuthResult> => {
     if (!supabase) return { data: null, error: NOT_CONFIGURED }
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      return authResultFrom(data, error)
+      const res = await apiJson<{ user: User; access_token: string }>('/api/auth/signin', {
+        method: 'POST',
+        body: { email, password },
+      })
+      setUser(res.user)
+      setAccessToken(res.access_token)
+      return { data: { user: res.user, session: null }, error: null }
     } catch (e) {
       return { data: null, error: asMessage(e) }
     }
@@ -90,19 +126,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async (): Promise<void> => {
     if (!supabase) return
     try {
-      await supabase.auth.signOut()
+      await apiJson<{ success: boolean }>('/api/auth/signout', { method: 'POST' })
     } catch (e) {
       console.error('signOut failed', e)
+    } finally {
+      setUser(null)
+      setAccessToken(null)
     }
   }, [])
 
   const resetPassword = useCallback(async (email: string): Promise<AuthResult> => {
     if (!supabase) return { data: null, error: NOT_CONFIGURED }
     try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      await apiJson<{ success: boolean }>('/api/auth/reset-password', {
+        method: 'POST',
+        body: { email },
       })
-      return authResultFrom(data, error)
+      return { data: { user: null, session: null }, error: null }
     } catch (e) {
       return { data: null, error: asMessage(e) }
     }
@@ -111,8 +151,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updatePassword = useCallback(async (password: string): Promise<AuthResult> => {
     if (!supabase) return { data: null, error: NOT_CONFIGURED }
     try {
-      const { data, error } = await supabase.auth.updateUser({ password })
-      return authResultFrom(data, error)
+      const res = await apiJson<{ user: User }>('/api/auth/update-password', {
+        method: 'POST',
+        body: { password },
+      })
+      setUser(res.user ?? null)
+      return { data: { user: res.user ?? null, session: null }, error: null }
     } catch (e) {
       return { data: null, error: asMessage(e) }
     }

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, createUserSupabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 
 const LS_KEY = 'gathr.saved'
@@ -35,14 +35,15 @@ export function SavedProvider({ children }: { children: ReactNode }) {
         setLoading(true)
         if (user && supabase) {
           const local = readLS()
+          const sb = createUserSupabase()
           if (local.length) {
-            await supabase.from('saved_venues').upsert(
+            await sb.from('saved_venues').upsert(
               local.map((venue_id) => ({ user_id: user.id, venue_id })),
               { onConflict: 'user_id,venue_id', ignoreDuplicates: true },
             )
             writeLS([])
           }
-          const { data, error } = await supabase.from('saved_venues').select('venue_id').eq('user_id', user.id)
+          const { data, error } = await sb.from('saved_venues').select('venue_id').eq('user_id', user.id)
           if (error) throw error
           if (active) setIds((data || []).map((r) => r.venue_id))
         } else {
@@ -64,9 +65,10 @@ export function SavedProvider({ children }: { children: ReactNode }) {
     setIds(next) // optimistic
     if (user && supabase) {
       try {
+        const sb = createUserSupabase()
         const res = has
-          ? await supabase.from('saved_venues').delete().eq('user_id', user.id).eq('venue_id', venueId)
-          : await supabase.from('saved_venues').upsert(
+          ? await sb.from('saved_venues').delete().eq('user_id', user.id).eq('venue_id', venueId)
+          : await sb.from('saved_venues').upsert(
               { user_id: user.id, venue_id: venueId },
               { onConflict: 'user_id,venue_id', ignoreDuplicates: true },
             )

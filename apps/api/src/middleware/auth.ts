@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from 'express'
 import { jwtVerify } from 'jose'
 import type { User } from '@supabase/supabase-js'
-import { isConfigured, createUserClient, createAnonClient } from '../lib/supabase.js'
+import { isConfigured, createUserClient, createAnonClient, supabaseAdmin } from '../lib/supabase.js'
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, readCookie, setCookie, authCookieOptions, refreshCookieOptions } from '../lib/cookies.js'
 import type { AuthedRequest } from '../types/express.js'
 
 // Local JWT verification removes the per-request auth-service hop. Supabase Auth
@@ -32,42 +33,76 @@ async function userFromToken(token: string): Promise<User | null> {
   }
 }
 
-// Resolves the user if a valid Bearer token is provided. Otherwise, attaches
-// a public/anonymous client. This is used for public endpoints that optionally
-// display user-specific data (e.g. public listings vs private drafts under RLS).
+// Try to resolve a valid access token + user from cookies. If the access token
+// is expired or absent but a refresh token cookie exists, refresh server-side
+// and set new cookies. Returns the resolved token and user, or null.
+async function resolveFromCookies(
+  req: Request,
+  res: Response,
+): Promise<{ token: string; user: User } | null> {
+  if (!supabaseAdmin) return null
+  const access = readCookie(req, ACCESS_TOKEN_COOKIE)
+  if (access) {
+    const localUser = await userFromToken(access)
+    if (localUser) return { token: access, user: localUser }
+    const { data, error } = await supabaseAdmin.auth.getUser(access)
+    if (!error && data.user) return { token: access, user: data.user }
+  }
+  const refresh = readCookie(req, REFRESH_TOKEN_COOKIE)
+  if (!refresh) return null
+  const { data, error } = await supabaseAdmin.auth.refreshSession({ refresh_token: refresh })
+  if (error || !data.session || !data.user) return null
+  // Rotate cookies on successful refresh.
+  setCookie(res, ACCESS_TOKEN_COOKIE, data.session.access_token, authCookieOptions())
+  setCookie(res, REFRESH_TOKEN_COOKIE, data.session.refresh_token, refreshCookieOptions())
+  return { token: data.session.access_token, user: data.user }
+}
+
+// Resolves the user from a Bearer header or from httpOnly auth cookies. Otherwise,
+// attaches a public/anonymous client. Used for public endpoints that optionally
+// display user-specific data under RLS.
 export async function resolveUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (!isConfigured) {
     res.status(503).json({ error: 'API not configured.' })
     return
   }
 
-  const header = req.headers.authorization || ''
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null
   const r = req as AuthedRequest
+  const header = req.headers.authorization || ''
+  const bearer = header.startsWith('Bearer ') ? header.slice(7) : null
 
-  if (token) {
+  if (bearer) {
     try {
-      // 1. Try local verification first to avoid the auth-service network hop.
-      const localUser = await userFromToken(token)
+      const localUser = await userFromToken(bearer)
       if (localUser) {
         r.user = localUser
-        r.supabase = createUserClient(token)
+        r.supabase = createUserClient(bearer)
         next()
         return
       }
-      // 2. Fall back to auth.getUser when the JWT secret is not configured or
-      //    the token didn't verify locally (e.g. old signing secret rotated).
       const anonClient = createAnonClient()
-      const { data, error } = await anonClient.auth.getUser(token)
+      const { data, error } = await anonClient.auth.getUser(bearer)
       if (!error && data?.user) {
         r.user = data.user
-        r.supabase = createUserClient(token)
+        r.supabase = createUserClient(bearer)
         next()
         return
       }
     } catch (e) {
-      // Ignore token errors and fallback to anon
+      // Ignore token errors and try cookies next.
     }
+  }
+
+  try {
+    const fromCookies = await resolveFromCookies(req, res)
+    if (fromCookies) {
+      r.user = fromCookies.user
+      r.supabase = createUserClient(fromCookies.token)
+      next()
+      return
+    }
+  } catch (e) {
+    // Ignore cookie errors and fallback to anon.
   }
 
   r.user = null as any
@@ -76,7 +111,7 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
 }
 
 // Enforces that the request is authenticated. Reuses user/client if resolveUser
-// has already run, otherwise parses and validates the Bearer token.
+// has already run, otherwise checks the Bearer header or httpOnly auth cookies.
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const r = req as AuthedRequest
   if (r.user && r.supabase) {
@@ -84,36 +119,47 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return
   }
 
-  const header = req.headers.authorization || ''
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null
-  if (!token) {
-    res.status(401).json({ error: 'Authentication required.' })
-    return
-  }
   if (!isConfigured) {
     res.status(503).json({ error: 'API not configured.' })
     return
   }
 
+  const header = req.headers.authorization || ''
+  const bearer = header.startsWith('Bearer ') ? header.slice(7) : null
+
+  if (bearer) {
+    try {
+      const localUser = await userFromToken(bearer)
+      if (localUser) {
+        r.user = localUser
+        r.supabase = createUserClient(bearer)
+        next()
+        return
+      }
+      const anonClient = createAnonClient()
+      const { data, error } = await anonClient.auth.getUser(bearer)
+      if (!error && data?.user) {
+        r.user = data.user
+        r.supabase = createUserClient(bearer)
+        next()
+        return
+      }
+    } catch (e) {
+      // Ignore token errors and try cookies next.
+    }
+  }
+
   try {
-    // Prefer local JWT verification; fall back to the auth service if unavailable.
-    const localUser = await userFromToken(token)
-    if (localUser) {
-      r.user = localUser
-      r.supabase = createUserClient(token)
+    const fromCookies = await resolveFromCookies(req, res)
+    if (fromCookies) {
+      r.user = fromCookies.user
+      r.supabase = createUserClient(fromCookies.token)
       next()
       return
     }
-    const anonClient = createAnonClient()
-    const { data, error } = await anonClient.auth.getUser(token)
-    if (error || !data?.user) {
-      res.status(401).json({ error: 'Invalid or expired token.' })
-      return
-    }
-    r.user = data.user
-    r.supabase = createUserClient(token)
-    next()
   } catch (e) {
-    next(e)
+    // Ignore cookie errors.
   }
+
+  res.status(401).json({ error: 'Authentication required.' })
 }

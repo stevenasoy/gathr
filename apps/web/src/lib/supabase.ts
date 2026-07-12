@@ -8,13 +8,9 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const isSupabaseConfigured = Boolean(url && anonKey)
 
-// INTERIM HARDENING: disable session persistence so the refresh token is never
-// written to localStorage (where it would be readable by any XSS payload).
-// Trade-off: the session lives in memory only, so a page reload clears auth
-// and the user must sign in again. This is a stop-gap until the production
-// @supabase/ssr httpOnly-cookie flow is adopted (see security notes). We keep
-// detectSessionInUrl so email-confirm / OAuth redirects still restore a session
-// within the same tab lifetime.
+// Default anonymous client. With the API-side httpOnly-cookie auth flow, the web
+// app no longer stores the session via supabase-js; this client is used only for
+// unauthenticated public reads and realtime subscriptions that carry their own token.
 export const supabase = isSupabaseConfigured
   ? createClient<Database>(url, anonKey, {
       auth: {
@@ -24,3 +20,31 @@ export const supabase = isSupabaseConfigured
       },
     })
   : null
+
+// Module-level access token managed by AuthContext. Direct Supabase calls (e.g.
+// saved venues, realtime notifications) use this token instead of supabase-js
+// storage. The long-lived refresh token stays in an httpOnly API cookie.
+let accessToken: string | null = null
+
+export function setAccessToken(token: string | null): void {
+  accessToken = token
+}
+
+export function getAccessToken(): string | null {
+  return accessToken
+}
+
+// Create a Supabase client scoped to the current access token.
+export function createUserSupabase(): ReturnType<typeof createClient<Database>> {
+  if (!isSupabaseConfigured || !url || !anonKey) {
+    throw new Error('Supabase is not configured.')
+  }
+  const token = accessToken
+  if (!token) {
+    throw new Error('No access token available.')
+  }
+  return createClient<Database>(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: true },
+  })
+}

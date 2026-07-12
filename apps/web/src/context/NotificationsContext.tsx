@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, createUserSupabase, getAccessToken } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import { fetchMyVenues } from '../lib/venues'
 import { listRequestsForVenues } from '../lib/bookings'
@@ -49,8 +49,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const venueIdsKey = venueIds.join(',')
   useEffect(() => {
     const sb = supabase
-    if (!user || !sb || !venueIds.length) return
-    const ch = sb
+    const token = getAccessToken()
+    if (!user || !sb || !token || !venueIds.length) return
+    const userSb = createUserSupabase()
+    const ch = userSb
       .channel('host-new-bookings')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bookings' }, (payload) => {
         const b = payload.new as Booking | null

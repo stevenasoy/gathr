@@ -6,12 +6,13 @@ import { CreateReviewSchema, parsePagination, validationErrorBody } from '../lib
 
 const router = Router()
 
-// GET /api/reviews/venue/:id — Public listing of reviews for a venue
+// GET /api/reviews/venue/:id — Public listing of reviews for a venue. Uses the
+// reviews_public view so anon callers never see reviewer user_id (M21).
 router.get('/venue/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { limit, offset } = parsePagination(req)
     const { data, error } = await (req as AuthedRequest).supabase
-      .from('reviews')
+      .from('reviews_public' as any)
       .select('*')
       .eq('venue_id', req.params.id as string)
       .order('created_at', { ascending: false })
