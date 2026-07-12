@@ -28,7 +28,9 @@ drop index if exists public.venues_status_idx;
 -- 2. Materialize review stats view (M13 + L28)
 -- ============================================================
 -- Refresh the existing plain view as a materialized view with a unique index.
+-- Drop both forms in case a previous partial run left it as a materialized view.
 drop view if exists public.venue_review_stats;
+drop materialized view if exists public.venue_review_stats;
 
 create materialized view public.venue_review_stats as
 select
