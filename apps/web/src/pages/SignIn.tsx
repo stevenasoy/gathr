@@ -59,7 +59,10 @@ export default function SignIn() {
             <button className="btn-primary" type="submit" disabled={loading}>
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
-            <p className="form-foot">New to Gathr? <Link to="/signup" state={{ from }}>Create an account</Link></p>
+            <p className="form-foot">
+              <Link to="/forgot-password" style={{ display: 'block', marginBottom: 8 }}>Forgot password?</Link>
+              New to Gathr? <Link to="/signup" state={{ from }}>Create an account</Link>
+            </p>
           </form>
         </div>
       </main>

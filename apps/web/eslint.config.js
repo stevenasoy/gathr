@@ -27,6 +27,11 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]' }],
       // Context files export a provider + hook together by design.
       'react-refresh/only-export-components': 'off',
+      // React Compiler is not enabled in this project (plain @vitejs/plugin-react),
+      // so manual memoization is legitimate. The preserve-manual-memoization rule
+      // assumes the compiler is optimizing these components and falsely flags
+      // every useMemo/useCallback as a conflict.
+      'react-hooks/preserve-manual-memoization': 'off',
     },
   },
 )

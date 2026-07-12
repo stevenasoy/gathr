@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit'
 import morgan from 'morgan'
 import { pathToFileURL } from 'node:url'
 import { resolveUser } from './middleware/auth.js'
+import type { AuthedRequest } from './types/express.js'
 import venuesRouter from './routes/venues.js'
 import bookingsRouter from './routes/bookings.js'
 import conversationsRouter from './routes/conversations.js'
@@ -34,7 +35,16 @@ const allowedOrigins = (process.env.CORS_ORIGIN || '')
 app.use(cors(allowedOrigins.length ? { origin: allowedOrigins, credentials: true } : { origin: false }))
 
 app.use(express.json({ limit: '100kb' }))
-app.use(morgan(isProd ? 'combined' : 'dev'))
+
+// Response-time logging + request ID correlation. A unique id is attached to each
+// request so log lines can be correlated with Supabase query traces.
+morgan.token('req-id', (req: Request) => (req as Request & { id?: string }).id || '-')
+
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  (req as Request & { id?: string }).id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+  next()
+})
+app.use(morgan(':method :url :status :response-time ms - :req-id', { skip: (req) => req.path === '/api/health' }))
 
 // --- Rate limiting ---
 app.use(rateLimit({
@@ -58,6 +68,22 @@ const contactLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many submissions. Please try again later.' },
+})
+
+// Stricter per-user write limiter for authenticated mutation endpoints. Only
+// counts POST/PUT/PATCH/DELETE; read traffic is exempt. Keys on authenticated
+// user id when available, otherwise falls back to IP.
+const writeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => ['GET', 'HEAD', 'OPTIONS'].includes(req.method),
+  keyGenerator: (req: Request) => {
+    const userId = (req as AuthedRequest).user?.id
+    return userId || (req.ip || req.socket.remoteAddress || 'unknown')
+  },
+  message: { error: 'Too many writes. Please slow down.' },
 })
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -85,11 +111,11 @@ app.post('/api/contact', contactLimiter, (req: Request, res: Response, next: Nex
   }
 })
 
-app.use('/api/venues', resolveUser, venuesRouter)
-app.use('/api/bookings', resolveUser, bookingsRouter)
-app.use('/api/conversations', resolveUser, conversationsRouter)
-app.use('/api/messages', resolveUser, messagesRouter)
-app.use('/api/reviews', resolveUser, reviewsRouter)
+app.use('/api/venues', resolveUser, writeLimiter, venuesRouter)
+app.use('/api/bookings', resolveUser, writeLimiter, bookingsRouter)
+app.use('/api/conversations', resolveUser, writeLimiter, conversationsRouter)
+app.use('/api/messages', resolveUser, writeLimiter, messagesRouter)
+app.use('/api/reviews', resolveUser, writeLimiter, reviewsRouter)
 
 // --- 404 (registered after routes) ---
 app.use((_req: Request, res: Response) => res.status(404).json({ error: 'Not found.' }))

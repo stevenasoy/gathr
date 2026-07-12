@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Star, ChevronLeft, MapPin, Users, Clock, CheckCircle2, ShieldCheck, Share, Heart, MessageSquare } from 'lucide-react'
 import Footer from '../components/Footer'
@@ -15,7 +15,12 @@ import { unitWord } from '../lib/venues'
 import { getOrCreateConversation } from '../lib/conversations'
 import { listReviews } from '../lib/reviews'
 import { peso, todayYMD } from '../lib/format'
+import { srcSet, withWidth, gallerySizes } from '../lib/images'
 import type { Review, PriceUnit } from '../types'
+
+// Compute once at module scope so the date boundary doesn't recompute on every
+// keystroke/render.
+const todayStr = todayYMD()
 
 const REVIEWS = [
   { name: 'Andrea L.', when: 'March 2026', text: 'Booked it for our company anniversary. Coordination was effortless and the space photographed beautifully.' },
@@ -131,6 +136,26 @@ export default function Venue() {
     }
   }
 
+  // Derived data memoized up front so hooks run unconditionally before any
+  // early return. When venue is not loaded yet, the arrays are empty.
+  const ownListing = !!user && venue?.ownerId === user.id
+  const venueId = venue?.id ?? ''
+  const venueTypes = venue?.types ?? []
+  const typeLabels = useMemo(
+    () => venueTypes.map((t) => CATEGORIES.find((c) => c.id === t)?.label).filter(Boolean),
+    [venueTypes],
+  )
+  const related = useMemo(
+    () => venues
+      .filter((v) => {
+        if (v.id === venueId) return false
+        if (ownListing && user) return v.ownerId === user.id
+        return v.types.some((t) => venueTypes.includes(t))
+      })
+      .slice(0, 4),
+    [venues, venueId, ownListing, user, venueTypes],
+  )
+
   if (!venue) {
     return (
       <div className="wrap empty" style={{ paddingTop: 80 }}>
@@ -158,13 +183,7 @@ export default function Venue() {
   const shownRating = realCount ? realAvg : venue.rating
   const shownCount = realCount || venue.reviews
   const hasReviews = shownCount > 0
-  const ownListing = !!user && venue.ownerId === user.id
-  const todayStr = todayYMD()
-  const typeLabels = venue.types.map((t) => CATEGORIES.find((c) => c.id === t)?.label).filter(Boolean)
-  const similar = venues.filter((v) => v.id !== venue.id && v.types.some((t) => venue.types.includes(t))).slice(0, 4)
-  const myOther = ownListing ? venues.filter((v) => v.ownerId === user.id && v.id !== venue.id).slice(0, 4) : []
   const relatedTitle = ownListing ? 'Your other listings' : 'Similar venues'
-  const related = ownListing ? myOther : similar
 
   return (
     <>
@@ -202,9 +221,20 @@ export default function Venue() {
 
         <div className="gallery">
           {venue.images.slice(0, 5).map((src, i) => (
-            <div className={'g-img' + (i === 0 ? ' g-main' : '')} key={i}>
-              <img src={src} alt={`${venue.name} ${i + 1}`} loading={i === 0 ? 'eager' : 'lazy'} decoding="async"
-                onError={(e) => { e.currentTarget.style.display = 'none' }} />
+            <div className={'g-img' + (i === 0 ? ' g-main' : '')} key={i} style={{ aspectRatio: '3/2' }}>
+              <img
+                src={withWidth(src, i === 0 ? 1200 : 600)}
+                alt={`${venue.name} ${i + 1}`}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                width={i === 0 ? 1200 : 600}
+                height={i === 0 ? 800 : 400}
+                sizes={i === 0 ? gallerySizes : '(max-width: 1024px) 50vw, 20vw'}
+                srcSet={srcSet(src, i === 0 ? [400, 800, 1200] : [400, 600])}
+                fetchPriority={i === 0 ? 'high' : undefined}
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             </div>
           ))}
         </div>

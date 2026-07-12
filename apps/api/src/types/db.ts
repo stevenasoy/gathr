@@ -77,6 +77,14 @@ export type SavedVenueRow = {
   updated_at: string
 }
 
+export type ProfileRow = {
+  id: string
+  full_name: string | null
+  role: string
+  created_at: string
+  updated_at: string
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -86,6 +94,7 @@ export type Database = {
       messages: { Row: MessageRow; Insert: Partial<MessageRow>; Update: Partial<MessageRow>; Relationships: [] }
       reviews: { Row: ReviewRow; Insert: Partial<ReviewRow>; Update: Partial<ReviewRow>; Relationships: [] }
       saved_venues: { Row: SavedVenueRow; Insert: Partial<SavedVenueRow>; Update: Partial<SavedVenueRow>; Relationships: [] }
+      profiles: { Row: ProfileRow; Insert: Partial<ProfileRow>; Update: Partial<ProfileRow>; Relationships: [] }
     }
     Views: {
       venue_review_stats: {

@@ -84,9 +84,11 @@ export default function Home() {
     return [{ title: 'Matching venues', items, rail: false }]
   }, [cat, venues])
 
-  const cityTiles = CITY_TILES
-    .map((c) => ({ ...c, count: venues.filter(c.match).length }))
-    .filter((c) => c.count > 0)
+  const cityTiles = useMemo(() => {
+    return CITY_TILES
+      .map((c) => ({ ...c, count: venues.filter(c.match).length }))
+      .filter((c) => c.count > 0)
+  }, [venues])
 
   return (
     <>

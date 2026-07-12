@@ -37,8 +37,14 @@ export function createUserClient(accessToken: string): SupabaseClient<Database> 
 }
 
 // Anonymous client for public endpoints when no user is signed in.
+// Cached as a module-level singleton so every public request doesn't recreate
+// a SupabaseClient (which opens fresh connection management state).
+let anonClientSingleton: SupabaseClient<Database> | null = null
 export function createAnonClient(): SupabaseClient<Database> {
-  return createClient<Database>(SUPABASE_URL as string, SUPABASE_ANON_KEY as string, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+  if (!anonClientSingleton) {
+    anonClientSingleton = createClient<Database>(SUPABASE_URL as string, SUPABASE_ANON_KEY as string, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+  }
+  return anonClientSingleton
 }

@@ -27,6 +27,8 @@ const Bookings = lazy(() => import('./pages/Bookings'))
 const BookingDetail = lazy(() => import('./pages/BookingDetail'))
 const SignIn = lazy(() => import('./pages/SignIn'))
 const SignUp = lazy(() => import('./pages/SignUp'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const Legal = lazy(() => import('./pages/Legal'))
 const Sitemap = lazy(() => import('./pages/Sitemap'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -51,6 +53,8 @@ const TITLES: [string, string][] = [
   ['/bookings', 'Your bookings'],
   ['/signin', 'Sign in'],
   ['/signup', 'Create an account'],
+  ['/forgot-password', 'Reset password'],
+  ['/reset-password', 'Choose a new password'],
   ['/privacy', 'Privacy'],
   ['/terms', 'Terms'],
   ['/sitemap', 'Sitemap'],
@@ -103,6 +107,8 @@ export default function App() {
             <Route path="/bookings/:id" element={<BookingDetail />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/privacy" element={<Legal />} />
             <Route path="/terms" element={<Legal />} />
             <Route path="/sitemap" element={<Sitemap />} />

@@ -9,6 +9,7 @@ import { fetchBooking, cancelBooking, setBookingStatus } from '../lib/bookings'
 import { fetchVenue } from '../lib/venues'
 import { getReviewForBooking, createReview } from '../lib/reviews'
 import { peso, fmtDate, fmtWhen, todayYMD } from '../lib/format'
+import { srcSet, withWidth, gallerySizes } from '../lib/images'
 import type { Venue, Review } from '../types'
 import type { BookingRow } from '../types/db'
 
@@ -187,13 +188,36 @@ export default function BookingDetail() {
 
         {images.length > 0 && (
           <Link to={`/venue/${b.venue_id}`} className="booking-photos" aria-label="View venue">
-            <div className="booking-photo-main">
-              <img src={images[0]} alt={b.venue_name} loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+            <div className="booking-photo-main" style={{ aspectRatio: '3/2' }}>
+              <img
+                src={withWidth(images[0], 1200)}
+                alt={b.venue_name}
+                loading="lazy"
+                decoding="async"
+                width={1200}
+                height={800}
+                sizes={gallerySizes}
+                srcSet={srcSet(images[0], [400, 800, 1200])}
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             </div>
             {images.length > 1 && (
               <div className="booking-photo-thumbs">
                 {images.slice(1, 4).map((src, i) => (
-                  <img key={i} src={src} alt={`${b.venue_name} ${i + 2}`} loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                  <div key={i} style={{ aspectRatio: '3/2' }}>
+                    <img
+                      src={withWidth(src, 400)}
+                      alt={`${b.venue_name} ${i + 2}`}
+                      loading="lazy"
+                      decoding="async"
+                      width={400}
+                      height={267}
+                      srcSet={srcSet(src, [400, 600])}
+                      onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
                 ))}
               </div>
             )}

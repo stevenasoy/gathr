@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
 import { Heart } from 'lucide-react'
 import VenueCard from '../components/VenueCard'
 import Footer from '../components/Footer'
@@ -10,7 +11,7 @@ export default function Saved() {
   const { ids, loading } = useSaved()
   const { user } = useAuth()
   const { venues } = useVenues()
-  const saved = venues.filter((v) => ids.includes(v.id))
+  const saved = useMemo(() => venues.filter((v) => ids.includes(v.id)), [venues, ids])
 
   return (
     <>

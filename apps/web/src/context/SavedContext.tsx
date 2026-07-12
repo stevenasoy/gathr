@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
@@ -7,14 +7,18 @@ const LS_KEY = 'gathr.saved'
 const readLS = (): string[] => { try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]') as string[] } catch { return [] } }
 const writeLS = (ids: string[]): void => { localStorage.setItem(LS_KEY, JSON.stringify(ids)) }
 
-interface SavedValue {
+interface SavedIdsValue {
   ids: string[]
-  isSaved: (id: string) => boolean
-  toggle: (venueId: string) => Promise<boolean>
   loading: boolean
 }
 
-const SavedContext = createContext<SavedValue | null>(null)
+interface SavedMethodsValue {
+  isSaved: (id: string) => boolean
+  toggle: (venueId: string) => Promise<boolean>
+}
+
+const SavedIdsContext = createContext<SavedIdsValue | null>(null)
+const SavedMethodsContext = createContext<SavedMethodsValue | null>(null)
 
 export function SavedProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
@@ -80,15 +84,33 @@ export function SavedProvider({ children }: { children: ReactNode }) {
 
   const isSaved = useCallback((id: string): boolean => ids.includes(id), [ids])
 
+  const idsValue = useMemo(() => ({ ids, loading }), [ids, loading])
+  const methodsValue = useMemo(() => ({ isSaved, toggle }), [isSaved, toggle])
+
   return (
-    <SavedContext.Provider value={{ ids, isSaved, toggle, loading }}>
-      {children}
-    </SavedContext.Provider>
+    <SavedIdsContext.Provider value={idsValue}>
+      <SavedMethodsContext.Provider value={methodsValue}>
+        {children}
+      </SavedMethodsContext.Provider>
+    </SavedIdsContext.Provider>
   )
 }
 
-export function useSaved(): SavedValue {
-  const ctx = useContext(SavedContext)
-  if (!ctx) throw new Error('useSaved must be used inside <SavedProvider>')
+export function useSavedIds(): SavedIdsValue {
+  const ctx = useContext(SavedIdsContext)
+  if (!ctx) throw new Error('useSavedIds must be used inside <SavedProvider>')
   return ctx
+}
+
+export function useSavedMethods(): SavedMethodsValue {
+  const ctx = useContext(SavedMethodsContext)
+  if (!ctx) throw new Error('useSavedMethods must be used inside <SavedProvider>')
+  return ctx
+}
+
+// Backward-compatible hook: returns both ids/loading and methods. Prefer the
+// narrower hooks in list items so React can skip re-renders when only the id
+// list changed.
+export function useSaved(): SavedIdsValue & SavedMethodsValue {
+  return { ...useSavedIds(), ...useSavedMethods() }
 }

@@ -1,14 +1,16 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus, Trash2, MapPin, Users, Clock, CalendarCheck, Check, X, Inbox, ChevronLeft, ChevronRight, Plane, Pencil, Eye, EyeOff, ExternalLink, StickyNote } from 'lucide-react'
 import Footer from '../components/Footer'
-import Messages from './Messages'
+
+const Messages = lazy(() => import('./Messages'))
 import { useAuth } from '../context/AuthContext'
 import { useVenues } from '../context/VenuesContext'
 import { useMode } from '../context/ModeContext'
 import { fetchMyVenues, deleteVenue, setVenueStatus, unitWord } from '../lib/venues'
 import { listRequestsForVenues, setBookingStatus } from '../lib/bookings'
 import { peso, fmtDate, toYMD, todayYMD } from '../lib/format'
+import { srcSet, withWidth, cardSizes } from '../lib/images'
 import type { Venue, BookingRow } from '../types'
 
 const MONTHS: string[] = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -305,8 +307,19 @@ export default function HostDashboard() {
                   <div className="grid">
                     {venues.map((v) => (
                       <div className="card host-card-item" key={v.id}>
-                        <Link to={`/host/edit/${v.id}`} className="card-media" style={{ display: 'block' }}>
-                          <img src={v.images[0]} alt={v.name} loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                        <Link to={`/host/edit/${v.id}`} className="card-media" style={{ display: 'block', aspectRatio: '3/2' }}>
+                          <img
+                            src={withWidth(v.images[0], 600)}
+                            alt={v.name}
+                            loading="lazy"
+                            decoding="async"
+                            width={600}
+                            height={400}
+                            sizes={cardSizes}
+                            srcSet={srcSet(v.images[0], [400, 600])}
+                            onError={(e) => { e.currentTarget.style.display = 'none' }}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
                           <span className={'card-badge status-pill ' + (v.status === 'live' ? 'status-confirmed' : 'status-cancelled')}>
                             {v.status === 'live' ? 'Live' : 'Unlisted'}
                           </span>
@@ -344,7 +357,9 @@ export default function HostDashboard() {
             {tab === 'messages' && (
               <>
                 <h1 className="dash-title">Messages</h1>
-                <Messages role="host" embedded />
+                <Suspense fallback={<p className="dash-muted">Loading messages…</p>}>
+                  <Messages role="host" embedded />
+                </Suspense>
               </>
             )}
           </>

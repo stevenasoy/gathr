@@ -9,6 +9,7 @@ import { CATEGORIES, AMENITIES } from '../data/categories'
 import { peso } from '../lib/format'
 
 const PRICE_MAX = 10000
+const PAGE_SIZE = 24
 
 export default function Search() {
   const [params] = useSearchParams()
@@ -24,6 +25,10 @@ export default function Search() {
   const [amenities, setAmenities] = useState<string[]>([])
   const [sort, setSort] = useState('recommended')
   const [showFilters, setShowFilters] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+
+  // Reset pagination when the search query changes.
+  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [qWhere, qType])
 
   // Re-searching from the compact bar changes the URL without remounting this
   // page, so pull the new query values back into the filter state.
@@ -119,9 +124,20 @@ export default function Search() {
           </div>
 
           {results.length ? (
-            <div className="grid">
-              {results.map((v) => <VenueCard key={v.id} venue={v} />)}
-            </div>
+            <>
+              <div className="grid">
+                {results.slice(0, visibleCount).map((v) => <VenueCard key={v.id} venue={v} />)}
+              </div>
+              {results.length > visibleCount && (
+                <button
+                  className="btn-clear"
+                  style={{ margin: '24px auto', display: 'block' }}
+                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                >
+                  Load more venues
+                </button>
+              )}
+            </>
           ) : (
             <div className="empty">
               <h3>No venues match those filters</h3>

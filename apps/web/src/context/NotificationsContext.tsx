@@ -43,6 +43,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   useEffect(() => { refresh() }, [refresh])
 
   // Live bump when a guest requests one of this host's venues.
+  // The subscription key is a stable string so the channel only tears down when
+  // the actual set of venue IDs changes, not when a fresh array reference is
+  // built during refresh().
+  const venueIdsKey = venueIds.join(',')
   useEffect(() => {
     const sb = supabase
     if (!user || !sb || !venueIds.length) return
@@ -56,7 +60,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       })
       .subscribe()
     return () => { sb.removeChannel(ch) }
-  }, [user, venueIds])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, venueIdsKey])
 
   return (
     <NotificationsContext.Provider value={{ count: pending.length, pending, loading, refresh }}>

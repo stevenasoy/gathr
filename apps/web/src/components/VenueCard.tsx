@@ -1,27 +1,33 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Link } from 'react-router-dom'
 import { Star, Heart } from 'lucide-react'
-import { useSaved } from '../context/SavedContext'
+import { useSavedMethods } from '../context/SavedContext'
 import { unitWord } from '../lib/venues'
 import { peso } from '../lib/format'
+import { srcSet, withWidth, cardSizes } from '../lib/images'
 import type { Venue } from '../types'
 
-export default function VenueCard({ venue }: { venue: Venue }) {
-  const { isSaved, toggle } = useSaved()
+function VenueCard({ venue }: { venue: Venue }) {
+  const { isSaved, toggle } = useSavedMethods()
   const [imgOk, setImgOk] = useState(true)
   const saved = isSaved(venue.id)
 
   return (
     <div className="card-wrap" style={{ position: 'relative' }}>
       <Link to={`/venue/${venue.id}`} className="card">
-        <div className="card-media">
+        <div className="card-media" style={{ aspectRatio: '3/2' }}>
           {imgOk && (
             <img
-              src={venue.images[0]}
+              src={withWidth(venue.images[0], 800)}
               alt={venue.name}
               loading="lazy"
               decoding="async"
+              width={800}
+              height={533}
+              sizes={cardSizes}
+              srcSet={srcSet(venue.images[0])}
               onError={() => setImgOk(false)}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           )}
           {venue.badge && <span className="card-badge">{venue.badge}</span>}
@@ -48,3 +54,5 @@ export default function VenueCard({ venue }: { venue: Venue }) {
     </div>
   )
 }
+
+export default memo(VenueCard)

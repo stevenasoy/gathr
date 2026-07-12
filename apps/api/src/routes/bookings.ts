@@ -12,6 +12,11 @@ import {
 
 const router = Router()
 
+// Columns needed for list views. Excludes the long `note`/`body` fields that
+// are only relevant on the detail page, so list responses stay small.
+const BOOKING_LIST_COLUMNS =
+  'id,user_id,venue_id,venue_name,event_type,event_date,hours,guests,total_php,status,created_at,updated_at'
+
 // All booking endpoints require authentication
 router.use(requireAuth)
 
@@ -22,26 +27,34 @@ router.use(requireAuth)
 
 // Load a booking and confirm the caller is party to it (the booking guest or
 // the host who owns the venue). Returns 403-shaped null when not authorized.
+// This is a single round-trip: the nested venue owner_id is fetched alongside
+// the booking columns so we don't pay a second DB hop for authz.
+type BookingWithVenue = {
+  id: string
+  user_id: string
+  venue_id: string
+  status: string
+  venues?: { owner_id: string }[] | null
+}
+
 async function loadBookingIfParty(
   r: AuthedRequest,
   id: string,
 ): Promise<{ row: Record<string, any> | null; allowed: boolean; found: boolean }> {
   const { data, error } = await r.supabase
     .from('bookings')
-    .select('id,user_id,venue_id,status')
+    .select('id,user_id,venue_id,status,venues!inner(owner_id)')
     .eq('id', id)
     .maybeSingle()
   if (error) throw error
   if (!data) return { row: null, allowed: false, found: false }
-  if (data.user_id === r.user.id) return { row: data, allowed: true, found: true }
+  const booking = data as unknown as BookingWithVenue
+  // The nested venues relation is returned as an array by supabase-js; pick the
+  // first (and only) row.
+  const ownerId = booking.venues?.[0]?.owner_id
+  if (booking.user_id === r.user.id) return { row: booking, allowed: true, found: true }
   // Host side: caller owns the venue being booked.
-  const { data: venue, error: vErr } = await r.supabase
-    .from('venues')
-    .select('owner_id')
-    .eq('id', data.venue_id)
-    .maybeSingle()
-  if (vErr) throw vErr
-  return { row: data, allowed: venue?.owner_id === r.user.id, found: true }
+  return { row: booking, allowed: ownerId === r.user.id, found: true }
 }
 
 // GET /api/bookings — List bookings for the authenticated user (guest)
@@ -51,7 +64,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const user = (req as AuthedRequest).user
     const { data, error } = await (req as AuthedRequest).supabase
       .from('bookings')
-      .select('*')
+      .select(BOOKING_LIST_COLUMNS)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
@@ -62,23 +75,43 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 })
 
-// GET /api/bookings/requests — List requests for specified venue IDs (host side)
+// GET /api/bookings/requests — List requests for the caller's venues (host side).
+// The client may suggest venue_ids, but the API fetches the caller's owned ids
+// and intersects them so a host can never enumerate another host's bookings.
 router.get('/requests', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const r = req as AuthedRequest
     const venueIdsQuery = req.query.venue_ids as string
-    if (!venueIdsQuery) {
-      res.json({ bookings: [] })
-      return
+    const requestedIds = venueIdsQuery ? venueIdsQuery.split(',').filter(Boolean) : []
+
+    // Fetch the venues this caller actually owns.
+    const { data: myVenues, error: venuesErr } = await r.supabase
+      .from('venues')
+      .select('id')
+      .eq('owner_id', r.user.id)
+    if (venuesErr) throw venuesErr
+    const ownedIds = new Set((myVenues || []).map((v) => v.id))
+
+    // If the client supplied ids, all of them must be owned. Otherwise we treat
+    // it as "all my venues" for convenience.
+    if (requestedIds.length) {
+      const unknown = requestedIds.find((id) => !ownedIds.has(id))
+      if (unknown) {
+        res.status(403).json({ error: 'Not authorized to view requests for one or more venues.' })
+        return
+      }
     }
-    const venueIds = venueIdsQuery.split(',').filter(Boolean)
+
+    const venueIds = requestedIds.length ? requestedIds : Array.from(ownedIds)
     if (!venueIds.length) {
       res.json({ bookings: [] })
       return
     }
+
     const { limit, offset } = parsePagination(req)
-    const { data, error } = await (req as AuthedRequest).supabase
+    const { data, error } = await r.supabase
       .from('bookings')
-      .select('*')
+      .select(BOOKING_LIST_COLUMNS)
       .in('venue_id', venueIds)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)

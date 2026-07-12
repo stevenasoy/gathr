@@ -1,6 +1,36 @@
 import type { Request, Response, NextFunction } from 'express'
+import { jwtVerify } from 'jose'
+import type { User } from '@supabase/supabase-js'
 import { isConfigured, createUserClient, createAnonClient } from '../lib/supabase.js'
 import type { AuthedRequest } from '../types/express.js'
+
+// Local JWT verification removes the per-request auth-service hop. Supabase Auth
+// issues HS256 tokens signed with the project JWT secret; we verify them here
+// and build a lightweight User object. If the secret is not configured we fall
+// back to the network call to auth.getUser() (existing behavior).
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET
+
+async function userFromToken(token: string): Promise<User | null> {
+  if (!JWT_SECRET || !token) return null
+  try {
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET), {
+      algorithms: ['HS256'],
+    })
+    if (!payload.sub) return null
+    return {
+      id: payload.sub as string,
+      email: payload.email as string | undefined,
+      user_metadata: (payload.user_metadata as Record<string, unknown>) || {},
+      app_metadata: (payload.app_metadata as Record<string, unknown>) || {},
+      aud: payload.aud as string,
+      role: payload.role as string,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as User
+  } catch (e) {
+    return null
+  }
+}
 
 // Resolves the user if a valid Bearer token is provided. Otherwise, attaches
 // a public/anonymous client. This is used for public endpoints that optionally
@@ -17,6 +47,16 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
 
   if (token) {
     try {
+      // 1. Try local verification first to avoid the auth-service network hop.
+      const localUser = await userFromToken(token)
+      if (localUser) {
+        r.user = localUser
+        r.supabase = createUserClient(token)
+        next()
+        return
+      }
+      // 2. Fall back to auth.getUser when the JWT secret is not configured or
+      //    the token didn't verify locally (e.g. old signing secret rotated).
       const anonClient = createAnonClient()
       const { data, error } = await anonClient.auth.getUser(token)
       if (!error && data?.user) {
@@ -56,6 +96,14 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   }
 
   try {
+    // Prefer local JWT verification; fall back to the auth service if unavailable.
+    const localUser = await userFromToken(token)
+    if (localUser) {
+      r.user = localUser
+      r.supabase = createUserClient(token)
+      next()
+      return
+    }
     const anonClient = createAnonClient()
     const { data, error } = await anonClient.auth.getUser(token)
     if (error || !data?.user) {

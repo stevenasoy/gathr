@@ -3,15 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <!--
-      Defense-in-depth CSP. NOTE: the connect-src origin below is a PLACEHOLDER
-      copied from apps/web/.env.example. You MUST replace `YOUR-PROJECT-ref` with
-      your real Supabase project ref (or broaden to https://*.supabase.co).
-      See security notes before shipping: this policy blocks Vite dev HMR
-      (script-src 'self') and the Google Fonts <link> (style-src/font-src).
-      Recommended: enforce CSP via a server response header in production and
-      remove this meta tag, or self-host fonts and apply prod-only.
+      CSP is intentionally NOT set here. A meta-tag CSP blocks Vite dev HMR,
+      Google Fonts, and would need a hardcoded Supabase project ref. Enforce CSP
+      via the production server/edge response header instead (see docs/ops.md).
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self' https://YOUR-PROJECT-ref.supabase.co; img-src 'self' data: https:; style-src 'self' 'unsafe-inline';" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Gathr — book extraordinary venues for weddings, offsites, parties, and shoots across the Philippines." />
@@ -25,7 +20,18 @@
     <meta name="twitter:description" content="Book extraordinary venues for weddings, offsites, parties, and shoots across the Philippines." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      onload="this.rel='stylesheet'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      />
+    </noscript>
     <title>Gathr — Venues for every gathering</title>
   </head>
   <body>
