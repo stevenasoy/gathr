@@ -27,11 +27,27 @@ drop index if exists public.venues_status_idx;
 -- ============================================================
 -- 2. Materialize review stats view (M13 + L28)
 -- ============================================================
--- Refresh the existing plain view as a materialized view with a unique index.
--- Drop both forms (order matters: materialized view first, then plain view).
--- Both IF EXISTS so only the matching one is removed without error.
-drop materialized view if exists public.venue_review_stats;
-drop view if exists public.venue_review_stats;
+-- Replace either relation kind without asking PostgreSQL to drop a view as a
+-- materialized view (or vice versa).
+do $$
+declare
+  relation_kind "char";
+begin
+  select c.relkind
+    into relation_kind
+    from pg_catalog.pg_class c
+    join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public'
+     and c.relname = 'venue_review_stats';
+
+  if relation_kind = 'm' then
+    execute 'drop materialized view public.venue_review_stats';
+  elsif relation_kind = 'v' then
+    execute 'drop view public.venue_review_stats';
+  elsif relation_kind is not null then
+    raise exception 'public.venue_review_stats has unsupported relkind %', relation_kind;
+  end if;
+end $$;
 
 create materialized view public.venue_review_stats as
 select
