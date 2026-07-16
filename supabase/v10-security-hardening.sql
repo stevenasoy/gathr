@@ -15,6 +15,8 @@ drop trigger if exists reviews_refresh_review_stats_update on public.reviews;
 drop trigger if exists reviews_refresh_review_stats_delete on public.reviews;
 drop function if exists public.refresh_venue_review_stats();
 drop function if exists public.refresh_review_stats();
+-- Task 4 intentionally replaces the removed review-refresh materialized view
+-- path with a safe view.
 
 create or replace function public.handle_new_user()
 returns trigger
