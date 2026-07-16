@@ -29,3 +29,6 @@ dist
 # dev scratch — automated screenshots / driver script
 drive-*.png
 drive.mjs
+
+# isolated implementation worktrees
+.worktrees/
