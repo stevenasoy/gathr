@@ -66,4 +66,4 @@ All must pass.
 - [ ] database-security
 - [ ] codeql
 - [ ] repository-security
-- [ ] E2E remains optional until its test-project secrets exist
+- [ ] Run the manual E2E workflow when `E2E_*` secrets exist

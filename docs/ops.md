@@ -57,7 +57,7 @@ Supabase: enable **Point-in-Time Recovery** (PITR) on the production project (Pr
 - web: lint + build + vitest
 - api: vitest (supertest)
 - docker: both images build
-- e2e: Playwright (optional — gated on `E2E_*` secrets; `continue-on-error`)
+- e2e: Playwright (manual `workflow_dispatch`; requires `E2E_*` secrets)
 
 **Branch protection** (configure in GitHub repo settings → Branches): require `web`, `api`, `docker`, `audit`, `database-security`, `codeql`, and `repository-security` checks to pass before merge to `main`; require PR reviews; forbid force-push.
 
