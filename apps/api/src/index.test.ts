@@ -192,7 +192,7 @@ describe('API auth proxy', () => {
   it('POST /api/auth/signin with invalid credentials → 401', async () => {
     const res = await request(app)
       .post('/api/auth/signin')
-      .send({ email: 'test@example.com', password: 'wrong' })
+      .send({ email: 'test@example.com', password: 'wrongpass' })
     expect(res.status).toBe(401)
   })
 

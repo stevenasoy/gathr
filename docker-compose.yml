@@ -1,11 +1,13 @@
-# Local parity stack: web (nginx) + api. Bring up with `docker compose up`.
-# Supabase env (SUPABASE_URL / keys) must be supplied via a .env at the repo
-# root or exported in the shell — they are NOT baked into the images.
 services:
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+        SUPABASE_URL: ${SUPABASE_URL}
+        SUPABASE_WS_URL: ${SUPABASE_WS_URL}
     ports:
       - "5173:80"
     depends_on:
@@ -17,8 +19,13 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - NODE_ENV=production
-      - PORT=3001
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+      NODE_ENV: production
+      PORT: 3001
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      SUPABASE_WS_URL: ${SUPABASE_WS_URL}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-0}

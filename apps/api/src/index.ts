@@ -17,7 +17,6 @@ import { HttpError } from './lib/errors.js'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 3001
-const isProd = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 // Raw error details (message + stack) are exposed ONLY in explicit dev/test.
 // Anything else — including an unset NODE_ENV, staging, or a prod misconfig —
@@ -31,7 +30,7 @@ app.use(helmet())
 // client IP from X-Forwarded-For instead of collapsing every caller onto the
 // proxy's single IP (which would either never throttle an abuser or trip the
 // global bucket for everyone at once). Defaults to 1 in prod, 0 in dev.
-app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? (isProd ? 1 : 0)))
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 0))
 
 const allowedOrigins = (process.env.CORS_ORIGIN || '')
   .split(',')
