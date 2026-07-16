@@ -289,4 +289,194 @@ alter table public.reviews drop constraint if exists reviews_venue_id_fkey;
 alter table public.reviews add constraint reviews_venue_fk
   foreign key (venue_id) references public.venues(id) on delete restrict;
 
+
+-- Replace either relation kind without issuing the wrong DROP command.
+do $$
+declare relation_kind "char";
+begin
+  select c.relkind into relation_kind
+    from pg_catalog.pg_class c
+    join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public' and c.relname = 'venue_review_stats';
+  if relation_kind = 'm' then
+    execute 'drop materialized view public.venue_review_stats';
+  elsif relation_kind = 'v' then
+    execute 'drop view public.venue_review_stats';
+  elsif relation_kind is not null then
+    raise exception 'public.venue_review_stats has unsupported relkind %', relation_kind;
+  end if;
+end $$;
+
+drop view if exists public.venues_live;
+drop view if exists public.reviews_public;
+create view public.venues_live with (security_barrier = true) as
+select id, name, city, area, types, capacity, price_per_hour, blurb,
+       amenities, image_urls, host_name, host_type, price_unit,
+       included_hours, status, created_at, updated_at
+  from public.venues
+ where status = 'live' and deleted_at is null;
+create view public.reviews_public with (security_barrier = true) as
+select r.id, r.venue_id, r.author_name, r.rating, r.body,
+       r.created_at, r.updated_at
+  from public.reviews r
+  join public.venues v on v.id = r.venue_id
+ where v.status = 'live' and v.deleted_at is null;
+create view public.venue_review_stats with (security_barrier = true) as
+select r.venue_id, count(*)::int as count,
+       avg(r.rating)::numeric(3,2) as avg
+  from public.reviews r
+  join public.venues v on v.id = r.venue_id
+ where v.status = 'live' and v.deleted_at is null
+ group by r.venue_id;
+
+drop policy if exists "venues: public read" on public.venues;
+drop policy if exists "venues: owner read" on public.venues;
+drop policy if exists "venues: owner select" on public.venues;
+create policy "venues: owner select" on public.venues
+  for select to authenticated using (owner_id = auth.uid());
+drop policy if exists "reviews: public read" on public.reviews;
+drop policy if exists "reviews: reviewer read" on public.reviews;
+create policy "reviews: reviewer read" on public.reviews
+  for select to authenticated using (user_id = auth.uid());
+revoke select on public.venues, public.reviews from anon;
+grant select on public.venues, public.reviews to authenticated;
+revoke all on public.venues_live, public.reviews_public, public.venue_review_stats from public;
+grant select on public.venues_live, public.reviews_public, public.venue_review_stats to anon, authenticated;
+
+create or replace function public.prepare_review()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  booking public.bookings%rowtype;
+  profile_name text;
+begin
+  select * into booking from public.bookings b where b.id = new.booking_id;
+  if not found or booking.user_id is distinct from auth.uid()
+     or booking.status <> 'confirmed'
+     or booking.event_date is null or booking.event_date > pg_catalog.current_date then
+    raise exception 'review requires a confirmed completed booking' using errcode = '42501';
+  end if;
+  select p.full_name into profile_name from public.profiles p where p.id = booking.user_id;
+  new.user_id := booking.user_id;
+  new.venue_id := booking.venue_id;
+  new.author_name := coalesce(nullif(profile_name, ''), 'Gathr member');
+  return new;
+end $$;
+drop trigger if exists reviews_prepare on public.reviews;
+create trigger reviews_prepare before insert on public.reviews
+for each row execute function public.prepare_review();
+revoke all on function public.prepare_review() from public, anon, authenticated;
+
+create or replace function public.guard_reviews_immutable()
+returns trigger language plpgsql set search_path = '' as $$
+begin
+  if new.booking_id is distinct from old.booking_id
+     or new.venue_id is distinct from old.venue_id
+     or new.user_id is distinct from old.user_id
+     or new.author_name is distinct from old.author_name then
+    raise exception 'review identity columns are immutable' using errcode = '42501';
+  end if;
+  return new;
+end $$;
+drop trigger if exists reviews_immutable on public.reviews;
+create trigger reviews_immutable before update on public.reviews
+for each row execute function public.guard_reviews_immutable();
+revoke all on function public.guard_reviews_immutable() from public, anon, authenticated;
+
+create or replace function private.text_array_within(p_values text[], p_max_items int, p_max_len int)
+returns boolean language sql immutable set search_path = '' as $$
+  select coalesce(cardinality(p_values) <= p_max_items, true)
+     and not exists (select 1 from pg_catalog.unnest(coalesce(p_values, '{}'::text[])) as u(value)
+                      where value is null or pg_catalog.char_length(value) > p_max_len)
+$$;
+create or replace function private.url_array_within(p_values text[], p_max_len int)
+returns boolean language sql immutable set search_path = '' as $$
+  select coalesce(cardinality(p_values) <= 20, true)
+     and not exists (select 1 from pg_catalog.unnest(coalesce(p_values, '{}'::text[])) as u(value)
+                      where value is null or pg_catalog.char_length(value) > p_max_len
+                         or value !~ '^https?://')
+$$;
+grant usage on schema private to authenticated, service_role;
+grant execute on function private.text_array_within(text[], int, int), private.url_array_within(text[], int)
+  to authenticated, service_role;
+
+alter table public.profiles drop constraint if exists profiles_full_name_len_chk;
+alter table public.profiles add constraint profiles_full_name_len_chk
+  check (full_name is null or char_length(full_name) <= 120) not valid;
+alter table public.venues drop constraint if exists venues_name_len_chk;
+alter table public.venues add constraint venues_name_len_chk
+  check (char_length(name) <= 160 and (area is null or char_length(area) <= 160)
+     and char_length(city) <= 120 and (host_name is null or char_length(host_name) <= 120)
+     and private.text_array_within(types, 12, 60)
+     and private.text_array_within(amenities, 50, 100)
+     and private.url_array_within(image_urls, 2048)) not valid;
+alter table public.venues drop constraint if exists venues_included_hours_chk;
+alter table public.venues add constraint venues_included_hours_chk
+  check (included_hours is null or included_hours between 1 and 168) not valid;
+alter table public.bookings drop constraint if exists bookings_text_len_chk;
+alter table public.bookings add constraint bookings_text_len_chk
+  check (char_length(venue_name) <= 160 and (event_type is null or char_length(event_type) <= 120)
+     and (note is null or char_length(note) <= 2000)) not valid;
+alter table public.bookings drop constraint if exists bookings_hours_bound_chk;
+alter table public.bookings add constraint bookings_hours_bound_chk
+  check (hours between 1 and 168) not valid;
+alter table public.conversations drop constraint if exists conversations_text_len_chk;
+alter table public.conversations add constraint conversations_text_len_chk
+  check (char_length(venue_name) <= 160) not valid;
+alter table public.messages drop constraint if exists messages_body_len_chk;
+alter table public.messages add constraint messages_body_len_chk
+  check (char_length(body) <= 5000) not valid;
+alter table public.reviews drop constraint if exists reviews_text_len_chk;
+alter table public.reviews add constraint reviews_text_len_chk
+  check (char_length(author_name) <= 120 and (body is null or char_length(body) <= 4000)) not valid;
+
+create or replace function private.can_upload_venue_photo()
+returns boolean
+language plpgsql volatile security definer
+set search_path = ''
+as $$
+declare actor uuid := auth.uid(); object_count integer;
+begin
+  if actor is null then return false; end if;
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(actor::text, 0));
+  select count(*) into object_count from storage.objects o
+   where o.bucket_id = 'venue-photos'
+     and (storage.foldername(o.name))[1] = actor::text;
+  return object_count < 100;
+end $$;
+grant execute on function private.can_upload_venue_photo() to authenticated, service_role;
+drop policy if exists "venue photos: owner upload" on storage.objects;
+create policy "venue photos: owner upload" on storage.objects
+  for insert to authenticated with check (
+    bucket_id = 'venue-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+    and private.can_upload_venue_photo()
+  );
+
+drop function if exists public.latest_messages(text, uuid[]);
+create function public.latest_messages(p_thread_kind text, p_thread_ids uuid[])
+returns table (id uuid, body text, created_at timestamptz, sender_id uuid,
+               booking_id uuid, conversation_id uuid)
+language sql stable security invoker set search_path = '' as $$
+  select id, body, created_at, sender_id, booking_id, conversation_id
+    from (
+      select distinct on (thread_id) m.id, m.body, m.created_at, m.sender_id,
+             m.booking_id, m.conversation_id, m.thread_id
+        from (
+          select m.*, case when p_thread_kind = 'booking_id' then m.booking_id
+                           else m.conversation_id end as thread_id
+            from public.messages m
+        ) m
+       where p_thread_kind in ('booking_id', 'conversation_id')
+         and cardinality(coalesce(p_thread_ids, '{}'::uuid[])) <= 200
+         and m.thread_id = any(coalesce(p_thread_ids, '{}'::uuid[]))
+       order by thread_id, created_at desc, id desc
+    ) latest
+$$;
+revoke all on function public.latest_messages(text, uuid[]) from public, anon;
+grant execute on function public.latest_messages(text, uuid[]) to authenticated;
+
 commit;

@@ -186,4 +186,83 @@ select pg_temp.assert_true(
   'cross-party foreign key still cascades on delete'
 );
 
+-- Task 4: public projections must not expose stable auth identifiers.
+select pg_temp.assert_true(
+  not exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'reviews_public'
+                and column_name in ('booking_id', 'user_id')),
+  'reviews_public exposes booking_id or user_id'
+);
+select pg_temp.assert_true(
+  not exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'venues_live'
+                and column_name = 'owner_id'),
+  'venues_live exposes owner_id'
+);
+select pg_temp.assert_true(
+  (select relkind = 'v' from pg_catalog.pg_class c
+    join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public' and c.relname = 'venue_review_stats'),
+  'venue_review_stats is not a plain view'
+);
+select pg_temp.assert_true(
+  not exists (select 1 from pg_catalog.pg_trigger t
+              join pg_catalog.pg_class c on c.oid = t.tgrelid
+              join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+             where n.nspname = 'public' and c.relname = 'reviews'
+               and t.tgname like 'reviews_refresh%'
+               and not t.tgisinternal),
+  'review stats refresh trigger still exists'
+);
+
+-- Review identity is derived from the confirmed booking and profile.
+set local role service_role;
+update public.bookings
+   set event_date = current_date - 1, status = 'confirmed'
+ where id = '30000000-0000-0000-0000-000000000001';
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+insert into public.reviews (booking_id, rating, body)
+values ('30000000-0000-0000-0000-000000000001', 5, 'Task 4 review');
+select pg_temp.assert_true(
+  (select author_name = 'Task 3 Guest'
+      and user_id = '10000000-0000-0000-0000-000000000001'
+      and venue_id = '20000000-0000-0000-0000-000000000001'
+     from public.reviews
+    where booking_id = '30000000-0000-0000-0000-000000000001'),
+  'forged review identity was not replaced by booking/profile data'
+);
+
+-- Latest-message RPC returns one newest row per authorized thread.
+insert into public.conversations (id, venue_id, venue_name, guest_id)
+values ('40000000-0000-0000-0000-000000000001',
+        '20000000-0000-0000-0000-000000000001', 'Task 3 Hourly Venue',
+        '10000000-0000-0000-0000-000000000001');
+insert into public.messages (booking_id, sender_id, body, created_at)
+values
+  ('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'old booking', now() - interval '1 minute'),
+  ('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'new booking', now());
+insert into public.messages (conversation_id, sender_id, body, created_at)
+values
+  ('40000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'old conversation', now() - interval '1 minute'),
+  ('40000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'new conversation', now());
+select pg_temp.assert_true(
+  (select count(*) = 1 from public.latest_messages(
+      'booking_id', array['30000000-0000-0000-0000-000000000001'::uuid]))
+  and (select count(*) = 1 from public.latest_messages(
+      'conversation_id', array['40000000-0000-0000-0000-000000000001'::uuid])),
+  'latest_messages does not return one row per authorized thread'
+);
+select pg_temp.assert_true(
+  exists (select 1 from pg_policies
+           where schemaname = 'storage' and tablename = 'objects'
+             and policyname = 'venue photos: owner upload'
+             and (with_check like '%storage.foldername(name)%'
+                  and with_check like '%can_upload_venue_photo()%')),
+  'venue photo insert policy lacks owner path or quota helper'
+);
 rollback;
