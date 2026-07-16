@@ -94,6 +94,13 @@ alter table public.bookings add column if not exists deleted_at timestamptz;
 alter table public.venues add column if not exists deleted_at timestamptz;
 alter table public.bookings alter column total_php type bigint using total_php::bigint;
 
+create or replace view public.venues_live as
+select id, name, city, area, types, capacity, price_per_hour, blurb,
+       amenities, image_urls, host_name, host_type, price_unit,
+       included_hours, status, created_at, updated_at
+  from public.venues
+ where status = 'live' and deleted_at is null;
+
 alter table public.venues drop constraint if exists venues_capacity_chk;
 alter table public.venues add constraint venues_capacity_chk
   check (capacity between 1 and 100000) not valid;

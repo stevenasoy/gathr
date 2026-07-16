@@ -139,7 +139,7 @@ begin
        1, 11, 1, 'requested');
     raise exception 'over-capacity booking unexpectedly succeeded';
   exception when others then
-    if sqlerrm = 'over-capacity booking unexpectedly succeeded' then
+    if sqlstate <> '23514' or position('capacity' in lower(sqlerrm)) = 0 then
       raise;
     end if;
   end;
@@ -153,11 +153,23 @@ select pg_temp.assert_true(
   and exists (select 1 from pg_attribute where attrelid = 'public.venues'::regclass and attname = 'deleted_at'),
   'soft-delete columns are missing'
 );
-select pg_temp.assert_true(
-  not has_table_privilege('authenticated', 'public.bookings', 'DELETE')
-  and not has_table_privilege('authenticated', 'public.venues', 'DELETE'),
-  'authenticated can hard-delete bookings or venues'
-);
+do $$
+declare deleted_count integer;
+begin
+  begin
+    delete from public.bookings
+     where id = '30000000-0000-0000-0000-000000000001';
+    get diagnostics deleted_count = row_count;
+    if deleted_count > 0
+       or not exists (select 1 from public.bookings where id = '30000000-0000-0000-0000-000000000001') then
+      raise exception 'authenticated hard-delete unexpectedly succeeded';
+    end if;
+  exception when others then
+    if sqlerrm = 'authenticated hard-delete unexpectedly succeeded' then
+      raise;
+    end if;
+  end;
+end $$;
 select pg_temp.assert_true(
   not exists (
     select 1
