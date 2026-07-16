@@ -13,7 +13,7 @@ Runbook for deploying and operating Gathr in production.
 Each app reads env from its own `.env` (gitignored). Required keys:
 
 - **web**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- **api**: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `CORS_ORIGIN` (comma-separated allowlist, no wildcard), `NODE_ENV`, `PORT`, `WEB_ORIGIN`, `SUPABASE_WS_URL`, `TRUST_PROXY_HOPS`
+- **api**: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `CORS_ORIGIN` (comma-separated allowlist, no wildcard), `NODE_ENV`, `PORT`, `WEB_ORIGIN`, `SUPABASE_WS_URL`, `TRUST_PROXY_HOPS`, `RATE_LIMIT_REDIS_URL`
 
 The API **service-role key bypasses RLS** — keep it server-only, never in the web bundle, never behind a public route. Public routes use the caller's JWT (see `apps/api/src/middleware/auth.js`).
 
@@ -75,4 +75,4 @@ Supabase: enable **Point-in-Time Recovery** (PITR) on the production project (Pr
 `docker compose up --build` builds and runs web (nginx :5173) + api (:3001) with healthchecks. For platform deploys (Fly/Railway/Render/Cloud Run), use the per-app Dockerfiles and set the env vars above. The web image serves static files behind nginx with CSP/HSTS/X-Frame-Options; the api image exposes `/api/health` for readiness probes.
 ## Scaling ceiling
 
-The API rate limiter is intentionally in-memory and supports one API replica. Add a shared store before running multiple API replicas. `TRUST_PROXY_HOPS` defaults to 0; set it only when a known reverse proxy is in front. The API image runs as the non-root `node` user.
+The API rate limiter uses Redis when `RATE_LIMIT_REDIS_URL` is configured, so limits are shared across replicas. Development may omit it and use the local fallback; production fails closed without it. `TRUST_PROXY_HOPS` defaults to 0; set it only when a known reverse proxy is in front. The API image runs as the non-root `node` user.

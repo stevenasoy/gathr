@@ -1,4 +1,14 @@
 services:
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
   web:
     build:
       context: .
@@ -16,6 +26,9 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "3001:3001"
     environment:
@@ -29,3 +42,4 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-0}
+      RATE_LIMIT_REDIS_URL: ${RATE_LIMIT_REDIS_URL:-redis://redis:6379}

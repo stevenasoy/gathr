@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
+import { closeRateLimitStore, createRateLimitStore } from './lib/rate-limit.js'
 import morgan from 'morgan'
 import { pathToFileURL } from 'node:url'
 import { resolveUser } from './middleware/auth.js'
@@ -54,12 +55,14 @@ app.use(morgan(':method :url :status :response-time ms - :req-id', { skip: (req)
 
 // --- Rate limiting ---
 const noOpRateLimit = (_req: Request, _res: Response, next: NextFunction) => next()
+const rateLimitStore = (name: string) => isTest ? undefined : createRateLimitStore(name)
 
 app.use(isTest ? noOpRateLimit : rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  store: rateLimitStore('global'),
 }))
 
 // --- Routes ---
@@ -75,6 +78,7 @@ const contactLimiter = isTest ? noOpRateLimit : rateLimit({
   max: 3,
   standardHeaders: true,
   legacyHeaders: false,
+  store: rateLimitStore('contact'),
   message: { error: 'Too many submissions. Please try again later.' },
 })
 
@@ -86,6 +90,7 @@ const writeLimiter = isTest ? noOpRateLimit : rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  store: rateLimitStore('writes'),
   skip: (req) => ['GET', 'HEAD', 'OPTIONS'].includes(req.method),
   keyGenerator: (req: Request) => {
     const userId = (req as AuthedRequest).user?.id
@@ -102,6 +107,7 @@ const authIpLimiter = isTest ? noOpRateLimit : rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  store: rateLimitStore('auth-ip'),
   keyGenerator: (req: Request) => req.ip || req.socket.remoteAddress || 'unknown',
   message: { error: 'Too many attempts from this network. Please try again later.' },
 })
@@ -111,6 +117,7 @@ const authEmailLimiter = isTest ? noOpRateLimit : rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  store: rateLimitStore('auth-email'),
   skip: (req) => !req.body?.email,
   keyGenerator: (req: Request) => req.body?.email || req.ip || 'unknown',
   message: { error: 'Too many attempts for this email. Please try again later.' },
@@ -224,13 +231,14 @@ const server = isMain
   : null
 
 // --- Graceful shutdown ---
-function shutdown(signal: string): void {
+async function shutdown(signal: string): Promise<void> {
   console.log(`${signal} received, closing server…`)
+  await closeRateLimitStore().catch((error) => console.error('rate-limit redis close error', error))
   server?.close(() => process.exit(0))
   // Force exit if connections won't drain within 10s.
   setTimeout(() => process.exit(1), 10000).unref()
 }
-process.on('SIGTERM', () => shutdown('SIGTERM'))
-process.on('SIGINT', () => shutdown('SIGINT'))
+process.on('SIGTERM', () => { void shutdown('SIGTERM') })
+process.on('SIGINT', () => { void shutdown('SIGINT') })
 
 export default app

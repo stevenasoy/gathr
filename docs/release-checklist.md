@@ -5,7 +5,7 @@ Use this before deploying to staging or production after a fresh clone or after 
 ## Environment setup
 
 - [ ] `apps/web/.env` - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- [ ] `apps/api/.env` - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `CORS_ORIGIN`, `WEB_ORIGIN`, `SUPABASE_WS_URL`, `TRUST_PROXY_HOPS`, `NODE_ENV=production`, `PORT=3001`
+- [ ] `apps/api/.env` - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `CORS_ORIGIN`, `WEB_ORIGIN`, `SUPABASE_WS_URL`, `TRUST_PROXY_HOPS`, `RATE_LIMIT_REDIS_URL`, `NODE_ENV=production`, `PORT=3001`
 
 Get `SUPABASE_JWT_SECRET` from Supabase Dashboard -> Project Settings -> API -> JWT Settings.
 
