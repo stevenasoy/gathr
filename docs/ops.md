@@ -13,7 +13,7 @@ Runbook for deploying and operating Gathr in production.
 Each app reads env from its own `.env` (gitignored). Required keys:
 
 - **web**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- **api**: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `CORS_ORIGIN` (comma-separated allowlist, no wildcard), `NODE_ENV`, `PORT`
+- **api**: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `CORS_ORIGIN` (comma-separated allowlist, no wildcard), `NODE_ENV`, `PORT`, `WEB_ORIGIN`, `SUPABASE_WS_URL`, `TRUST_PROXY_HOPS`, `RATE_LIMIT_REDIS_URL`
 
 The API **service-role key bypasses RLS** — keep it server-only, never in the web bundle, never behind a public route. Public routes use the caller's JWT (see `apps/api/src/middleware/auth.js`).
 
@@ -29,11 +29,11 @@ The refresh token **never reaches browser JavaScript**. Configure Supabase Auth 
 
 ### Content-Security-Policy
 
-Do **not** rely on the `index.html` meta tag for CSP in production. The repo ships no meta CSP because it blocks Vite dev HMR and Google Fonts. Enforce CSP via the production server/edge response header. The bundled nginx config already sets a CSP in `apps/web/nginx.conf:35` — review it and replace `https://*.supabase.co` with your exact Supabase project origin before deploying.
+Do **not** rely on the `index.html` meta tag for CSP in production. The repo ships no meta CSP because it blocks Vite dev HMR and Google Fonts. Enforce CSP via the production server/edge response header. The bundled nginx config already sets a CSP in `apps/web/nginx.conf:35` — review it and the image substitutes `__SUPABASE_URL__` and `__SUPABASE_WS_URL__`; deploy with exact project origins, never a wildcard.
 
 ## Schema migrations
 
-Migrations are loose SQL files applied in order via the Supabase SQL Editor (no CLI runner yet):
+Migrations are loose SQL files applied in order via the Supabase SQL Editor (the local runner is `supabase/tests/apply-all.sql` and is blocking in CI):
 
 ```
 schema.sql → host-schema.sql → v2-schema.sql → v3-schema.sql → v4-schema.sql → v5-schema.sql → v6-performance.sql → v7-hardening.sql → v8-polish.sql → v9-public-views.sql
@@ -59,7 +59,7 @@ Supabase: enable **Point-in-Time Recovery** (PITR) on the production project (Pr
 - docker: both images build
 - e2e: Playwright (optional — gated on `E2E_*` secrets; `continue-on-error`)
 
-**Branch protection** (configure in GitHub repo settings → Branches): require the `web` + `api` + `docker` checks to pass before merge to `main`; require PR reviews; forbid force-push.
+**Branch protection** (configure in GitHub repo settings → Branches): require `web`, `api`, `docker`, `audit`, `database-security`, `codeql`, and `repository-security` checks to pass before merge to `main`; require PR reviews; forbid force-push.
 
 ## Incident runbook (skeleton)
 
@@ -73,3 +73,6 @@ Supabase: enable **Point-in-Time Recovery** (PITR) on the production project (Pr
 ## Deploy
 
 `docker compose up --build` builds and runs web (nginx :5173) + api (:3001) with healthchecks. For platform deploys (Fly/Railway/Render/Cloud Run), use the per-app Dockerfiles and set the env vars above. The web image serves static files behind nginx with CSP/HSTS/X-Frame-Options; the api image exposes `/api/health` for readiness probes.
+## Scaling ceiling
+
+The API rate limiter uses Redis when `RATE_LIMIT_REDIS_URL` is configured, so limits are shared across replicas. Development may omit it and use the local fallback; production fails closed without it. `TRUST_PROXY_HOPS` defaults to 0; set it only when a known reverse proxy is in front. The API image runs as the non-root `node` user.

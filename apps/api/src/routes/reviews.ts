@@ -57,28 +57,7 @@ router.get('/stats', async (req: Request, res: Response, next: NextFunction) => 
       return
     }
 
-    // 2. Fallback to in-memory full-table aggregation if the view query errors
-    //    (e.g. the materialized view hasn't been created yet in this environment).
-    const { data, error } = await (req as AuthedRequest).supabase
-      .from('reviews')
-      .select('venue_id, rating')
-    if (error) throw error
-
-    const stats: Record<string, { count: number; sum: number; avg: number }> = {}
-    for (const r of data || []) {
-      const s = (stats[r.venue_id] ||= { count: 0, sum: 0, avg: 0 })
-      s.count += 1
-      s.sum += r.rating
-    }
-    const finalStats: Record<string, { count: number; avg: number }> = {}
-    for (const id in stats) {
-      finalStats[id] = {
-        count: stats[id].count,
-        avg: Math.round((stats[id].sum / stats[id].count) * 100) / 100
-      }
-    }
-    statsCache = { data: finalStats, expiry: Date.now() + STATS_TTL_MS }
-    res.json({ stats: finalStats })
+    if (viewError) throw viewError
   } catch (e) {
     next(e)
   }
@@ -103,16 +82,15 @@ router.get('/booking/:id', requireAuth, async (req: Request, res: Response, next
 // pinned to the caller; a reviewer cannot attribute a review to another user.
 router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = (req as AuthedRequest).user
     const parsed = CreateReviewSchema.safeParse(req.body)
     if (!parsed.success) {
       res.status(422).json(validationErrorBody(parsed.error))
       return
     }
-    const { booking_id, venue_id, author_name, rating, body } = parsed.data
+    const { booking_id, rating, body } = parsed.data
     const { data, error } = await (req as AuthedRequest).supabase
       .from('reviews')
-      .insert({ booking_id, venue_id, user_id: user.id, author_name, rating, body: body || null })
+      .insert({ booking_id, rating, body: body || null })
       .select()
       .single()
     if (error) throw error

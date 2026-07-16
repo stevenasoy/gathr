@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { createUserSupabase } from './supabase'
 
 const BUCKET = 'venue-photos'
 const MAX_MB = 5
@@ -10,7 +10,9 @@ export async function uploadVenuePhoto(
   file: File,
   userId: string,
 ): Promise<{ url: string | null; error: { message: string } | null }> {
-  if (!supabase) return { url: null, error: { message: 'Backend not connected.' } }
+  let supabase
+  try { supabase = createUserSupabase() } catch { return { url: null, error: { message: 'Please sign in before uploading photos.' } }
+  }
   if (!file.type.startsWith('image/')) return { url: null, error: { message: `${file.name} isn't an image.` } }
   if (file.size > MAX_MB * 1024 * 1024) return { url: null, error: { message: `${file.name} is over ${MAX_MB}MB. Resize it and try again.` } }
 

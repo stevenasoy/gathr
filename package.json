@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "concurrently --raw --names \"web,api\" --prefix-colors cyan,magenta -- \"npm run dev:web\" \"npm run dev:api\"",
@@ -28,6 +28,7 @@
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "concurrently": "^10.0.3",
+    "supabase": "2.109.1",
     "tsx": "^4.23.0",
     "typescript": "^5.9.3"
   }
