@@ -47,7 +47,7 @@ jobs:
       - name: Build web image
         run: docker build -f apps/web/Dockerfile -t gathr-web:ci --build-arg VITE_SUPABASE_URL=https://example.invalid --build-arg VITE_SUPABASE_ANON_KEY=test-public-key --build-arg SUPABASE_URL=https://example.invalid --build-arg SUPABASE_WS_URL=wss://example.invalid .
       - name: Scan web image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: gathr-web:ci
           scanners: vuln,secret,misconfig
@@ -57,7 +57,7 @@ jobs:
       - name: Build api image
         run: docker build -f apps/api/Dockerfile -t gathr-api:ci .
       - name: Scan api image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: gathr-api:ci
           scanners: vuln,secret,misconfig
@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      - uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: fs
           scan-ref: .
