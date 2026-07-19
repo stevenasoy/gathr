@@ -33,5 +33,4 @@ export default tseslint.config(
       // every useMemo/useCallback as a conflict.
       'react-hooks/preserve-manual-memoization': 'off',
     },
-  },
-)
+  },;
