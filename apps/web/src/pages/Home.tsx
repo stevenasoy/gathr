@@ -142,118 +142,114 @@ export default function Home() {
 
   return (
     <>
-      <section className="relative overflow-hidden bg-canvas min-h-[100dvh] -mt-[88px] flex items-center">
-        {/* Layered ambient lighting for a premium mesh glow */}
-        <div className="absolute inset-0 z-0 opacity-80" style={{ 
-          background: `
-            radial-gradient(at 90% 10%, rgba(194, 90, 30, 0.09) 0px, transparent 50%),
-            radial-gradient(at 10% 90%, rgba(28, 77, 56, 0.05) 0px, transparent 50%),
-            radial-gradient(at 50% 50%, rgba(194, 90, 30, 0.02) 0px, transparent 80%)
-          `
-        }} />
-        <div className="max-w-wrap mx-auto px-6 sm:px-10 pt-[108px] pb-16 relative z-[1] text-left w-full">
-          <div className="grid grid-cols-1 gap-10 items-center min-[1100px]:grid-cols-2 min-[1100px]:gap-12 xl:grid-cols-[1.1fr_0.9fr]">
-            <div>
-              {user ? (
-                <h1 className="font-outfit text-[clamp(32px,3.8vw,54px)] font-extrabold leading-[1.1] mb-5 max-w-[680px] tracking-[-0.03em] text-ink">
-                  Welcome back.<br />Find your next <span className="font-display italic font-bold bg-gradient bg-clip-text text-transparent pr-1">space.</span>
-                </h1>
-              ) : (
+      {!user && (
+        <section className="relative overflow-hidden bg-canvas min-h-[100dvh] -mt-[88px] flex items-center">
+          {/* Layered ambient lighting for a premium mesh glow */}
+          <div className="absolute inset-0 z-0 opacity-80" style={{ 
+            background: `
+              radial-gradient(at 90% 10%, rgba(194, 90, 30, 0.09) 0px, transparent 50%),
+              radial-gradient(at 10% 90%, rgba(28, 77, 56, 0.05) 0px, transparent 50%),
+              radial-gradient(at 50% 50%, rgba(194, 90, 30, 0.02) 0px, transparent 80%)
+            `
+          }} />
+          <div className="max-w-wrap mx-auto px-6 sm:px-10 pt-[108px] pb-16 relative z-[1] text-left w-full">
+            <div className="grid grid-cols-1 gap-10 items-center min-[1100px]:grid-cols-2 min-[1100px]:gap-12 xl:grid-cols-[1.1fr_0.9fr]">
+              <div>
                 <h1 className="font-outfit text-[clamp(32px,3.8vw,54px)] font-extrabold leading-[1.1] mb-5 max-w-[680px] tracking-[-0.03em] text-ink">
                   Book the space.<br /><span className="font-display italic font-bold bg-gradient bg-clip-text text-transparent pr-1">Make it a moment.</span>
                 </h1>
-              )}
-              <p className="text-[clamp(16px,1.5vw,18px)] text-ink-soft mb-9 max-w-[520px] leading-relaxed opacity-95">
-                From beachfront weddings to rooftop launches, find and book extraordinary venues across the Philippines.
-              </p>
-              <div className="flex justify-start"><SearchBar /></div>
-              <div className="flex justify-start items-center gap-3 mt-8 flex-wrap text-ink-soft text-[13px] font-mono font-medium">
-                <span>Transparent pricing</span>
-                <span className="text-line-strong">·</span>
-                <span>Real guest reviews</span>
-                <span className="text-line-strong">·</span>
-                <span>Book direct with the venue</span>
+                <p className="text-[clamp(16px,1.5vw,18px)] text-ink-soft mb-9 max-w-[520px] leading-relaxed opacity-95">
+                  From beachfront weddings to rooftop launches, find and book extraordinary venues across the Philippines.
+                </p>
+                <div className="flex justify-start"><SearchBar /></div>
+                <div className="flex justify-start items-center gap-3 mt-8 flex-wrap text-ink-soft text-[13px] font-mono font-medium">
+                  <span>Transparent pricing</span>
+                  <span className="text-line-strong">·</span>
+                  <span>Real guest reviews</span>
+                  <span className="text-line-strong">·</span>
+                  <span>Book direct with the venue</span>
+                </div>
+              </div>
+
+              {/* Desktop grid (visible on min-[1100px] and above) */}
+              <div className="hidden min-[1100px]:grid grid-cols-2 gap-4 relative" aria-hidden="true">
+                <div className="flex flex-col gap-4">
+                  <div className="relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:-translate-y-1 aspect-[4/5]">
+                    <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=400&q=80" alt="Garden Wedding" className="w-full h-full object-cover" />
+                    <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
+                      <span>Garden Lawn</span>
+                      <span className="font-mono text-xs text-brand">Tagaytay</span>
+                    </div>
+                  </div>
+                  <div className="relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:-translate-y-1 aspect-[4/5]">
+                    <img src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?auto=format&fit=crop&w=400&q=80" alt="Photo Studio" className="w-full h-full object-cover" />
+                    <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
+                      <span>Photo Studio</span>
+                      <span className="font-mono text-xs text-brand">Quezon City</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-4 min-[1100px]:pt-8">
+                  <div className="relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:-translate-y-1 aspect-[4/5]">
+                    <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=400&q=80" alt="Rooftop Party" className="w-full h-full object-cover" />
+                    <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
+                      <span>Rooftop Loft</span>
+                      <span className="font-mono text-xs text-brand">Cebu City</span>
+                    </div>
+                  </div>
+                  <div className="relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:-translate-y-1 aspect-[4/5]">
+                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80" alt="Beach Resort" className="w-full h-full object-cover" />
+                    <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
+                      <span>Beach Cove</span>
+                      <span className="font-mono text-xs text-brand">Bohol</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Desktop grid (visible on min-[1100px] and above) */}
-            <div className="hidden min-[1100px]:grid grid-cols-2 gap-4 relative" aria-hidden="true">
-              <div className="flex flex-col gap-4">
-                <div className="relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:-translate-y-1 aspect-[4/5]">
+            {/* Mobile/Tablet Horizontal Scroll Carousel (visible below min-[1100px]) */}
+            <div className="min-[1100px]:hidden mt-10 w-full" aria-hidden="true">
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory -mx-6 px-6 sm:-mx-10 sm:px-10">
+                <div className="snap-start shrink-0 w-[240px] aspect-[4/5] relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-all duration-300">
                   <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=400&q=80" alt="Garden Wedding" className="w-full h-full object-cover" />
                   <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
                     <span>Garden Lawn</span>
-                    <span className="font-mono text-xs text-brand">Tagaytay</span>
+                    <span className="font-mono text-[10px] text-brand uppercase tracking-wider">Tagaytay</span>
                   </div>
                 </div>
-                <div className="relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:-translate-y-1 aspect-[4/5]">
-                  <img src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?auto=format&fit=crop&w=400&q=80" alt="Photo Studio" className="w-full h-full object-cover" />
-                  <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
-                    <span>Photo Studio</span>
-                    <span className="font-mono text-xs text-brand">Quezon City</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-4 min-[1100px]:pt-8">
-                <div className="relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:-translate-y-1 aspect-[4/5]">
+                <div className="snap-start shrink-0 w-[240px] aspect-[4/5] relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-all duration-300">
                   <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=400&q=80" alt="Rooftop Party" className="w-full h-full object-cover" />
                   <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
                     <span>Rooftop Loft</span>
-                    <span className="font-mono text-xs text-brand">Cebu City</span>
+                    <span className="font-mono text-[10px] text-brand uppercase tracking-wider">Cebu City</span>
                   </div>
                 </div>
-                <div className="relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:-translate-y-1 aspect-[4/5]">
+                <div className="snap-start shrink-0 w-[240px] aspect-[4/5] relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-all duration-300">
+                  <img src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?auto=format&fit=crop&w=400&q=80" alt="Photo Studio" className="w-full h-full object-cover" />
+                  <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
+                    <span>Photo Studio</span>
+                    <span className="font-mono text-[10px] text-brand uppercase tracking-wider">Quezon City</span>
+                  </div>
+                </div>
+                <div className="snap-start shrink-0 w-[240px] aspect-[4/5] relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-all duration-300">
                   <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80" alt="Beach Resort" className="w-full h-full object-cover" />
                   <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
                     <span>Beach Cove</span>
-                    <span className="font-mono text-xs text-brand">Bohol</span>
+                    <span className="font-mono text-[10px] text-brand uppercase tracking-wider">Bohol</span>
                   </div>
                 </div>
               </div>
+              <div className="flex justify-center gap-1.5 mt-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-line-strong"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-line-strong"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-line-strong"></span>
+              </div>
             </div>
           </div>
-
-          {/* Mobile/Tablet Horizontal Scroll Carousel (visible below min-[1100px]) */}
-          <div className="min-[1100px]:hidden mt-10 w-full" aria-hidden="true">
-            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory -mx-6 px-6 sm:-mx-10 sm:px-10">
-              <div className="snap-start shrink-0 w-[240px] aspect-[4/5] relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-all duration-300">
-                <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=400&q=80" alt="Garden Wedding" className="w-full h-full object-cover" />
-                <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
-                  <span>Garden Lawn</span>
-                  <span className="font-mono text-[10px] text-brand uppercase tracking-wider">Tagaytay</span>
-                </div>
-              </div>
-              <div className="snap-start shrink-0 w-[240px] aspect-[4/5] relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-all duration-300">
-                <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=400&q=80" alt="Rooftop Party" className="w-full h-full object-cover" />
-                <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
-                  <span>Rooftop Loft</span>
-                  <span className="font-mono text-[10px] text-brand uppercase tracking-wider">Cebu City</span>
-                </div>
-              </div>
-              <div className="snap-start shrink-0 w-[240px] aspect-[4/5] relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-all duration-300">
-                <img src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?auto=format&fit=crop&w=400&q=80" alt="Photo Studio" className="w-full h-full object-cover" />
-                <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
-                  <span>Photo Studio</span>
-                  <span className="font-mono text-[10px] text-brand uppercase tracking-wider">Quezon City</span>
-                </div>
-              </div>
-              <div className="snap-start shrink-0 w-[240px] aspect-[4/5] relative rounded-lg overflow-hidden shadow-pop border border-line bg-tint transition-all duration-300">
-                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80" alt="Beach Resort" className="w-full h-full object-cover" />
-                <div className="absolute bottom-3 left-3 right-3 bg-white/[0.92] backdrop-blur-lg px-3 py-2 rounded-lg text-xs font-bold text-ink flex justify-between items-center shadow-card border border-white/[0.4] z-[2]">
-                  <span>Beach Cove</span>
-                  <span className="font-mono text-[10px] text-brand uppercase tracking-wider">Bohol</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-center gap-1.5 mt-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand"></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-line-strong"></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-line-strong"></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-line-strong"></span>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <div className="venues-section-wrap">
         <CategoryRow active={cat} onChange={setCat} />
