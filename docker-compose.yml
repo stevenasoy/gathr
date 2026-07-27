@@ -1,11 +1,23 @@
-# Local parity stack: web (nginx) + api. Bring up with `docker compose up`.
-# Supabase env (SUPABASE_URL / keys) must be supplied via a .env at the repo
-# root or exported in the shell — they are NOT baked into the images.
 services:
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+        SUPABASE_URL: ${SUPABASE_URL}
+        SUPABASE_WS_URL: ${SUPABASE_WS_URL}
     ports:
       - "5173:80"
     depends_on:
@@ -14,11 +26,20 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "3001:3001"
     environment:
-      - NODE_ENV=production
-      - PORT=3001
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+      NODE_ENV: production
+      PORT: 3001
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      SUPABASE_WS_URL: ${SUPABASE_WS_URL}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-0}
+      RATE_LIMIT_REDIS_URL: ${RATE_LIMIT_REDIS_URL:-redis://redis:6379}

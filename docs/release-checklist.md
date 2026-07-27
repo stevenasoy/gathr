@@ -4,10 +4,10 @@ Use this before deploying to staging or production after a fresh clone or after 
 
 ## Environment setup
 
-- [ ] `apps/web/.env` — `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- [ ] `apps/api/.env` — `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `CORS_ORIGIN`, `NODE_ENV=production`, `PORT=3001`
+- [ ] `apps/web/.env` - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- [ ] `apps/api/.env` - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `CORS_ORIGIN`, `WEB_ORIGIN`, `SUPABASE_WS_URL`, `TRUST_PROXY_HOPS`, `RATE_LIMIT_REDIS_URL`, `NODE_ENV=production`, `PORT=3001`
 
-Get `SUPABASE_JWT_SECRET` from Supabase Dashboard → Project Settings → API → JWT Settings.
+Get `SUPABASE_JWT_SECRET` from Supabase Dashboard -> Project Settings -> API -> JWT Settings.
 
 ## Supabase schema (apply in order via SQL Editor)
 
@@ -23,12 +23,13 @@ Run each file once, in order, against the target project:
 8. `supabase/v7-hardening.sql`
 9. `supabase/v8-polish.sql`
 10. `supabase/v9-public-views.sql`
+11. `supabase/v10-security-hardening.sql`
 
 After `v5`, run `validate constraint` for each `NOT VALID` CHECK once data is clean.
 
 ## Auth settings
 
-In Supabase Dashboard → Authentication → Sessions:
+In Supabase Dashboard -> Authentication -> Sessions:
 
 - [ ] Access token (JWT) expiry: **1 hour** (3600 seconds)
 - [ ] Refresh token expiry: **30 days**
@@ -55,3 +56,14 @@ All must pass.
 - [ ] `GET /api/venues` returns public listings without `owner_id`
 - [ ] `GET /api/reviews/venue/:id` returns reviews without `user_id`
 - [ ] `POST /api/auth/signout` clears both cookies
+
+## Required CI checks
+
+- [ ] web
+- [ ] api
+- [ ] docker
+- [ ] audit
+- [ ] database-security
+- [ ] codeql
+- [ ] repository-security
+- [ ] E2E remains optional until its test-project secrets exist

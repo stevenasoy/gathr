@@ -6,6 +6,7 @@ vi.hoisted(() => {
   process.env.SUPABASE_ANON_KEY = 'sb_publishable_test_fakefakefakefakefakefake'
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'dummy-service-key'
   process.env.SUPABASE_JWT_SECRET = '' // force resolveFromCookies to use getUser()
+  process.env.RATE_LIMIT_REDIS_URL = 'redis://test.invalid:6379'
 })
 
 import { describe, it, expect } from 'vitest'
@@ -62,6 +63,16 @@ vi.mock('@supabase/supabase-js', () => {
   }
   return { createClient: () => makeClient() }
 })
+
+vi.mock('redis', () => ({
+  createClient: () => ({
+    isOpen: true,
+    on: () => undefined,
+    connect: async () => undefined,
+    sendCommand: async (command: string[]) => command[0] === 'SCRIPT' ? 'sha' : [1, 60000],
+    quit: async () => undefined,
+  }),
+}))
 
 // Imported AFTER env + mock are in place.
 import app from './index.js'

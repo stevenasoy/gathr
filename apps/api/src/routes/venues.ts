@@ -113,9 +113,6 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
       .select()
       .single()
     if (error) throw error
-    // Best-effort role promotion; ignore failures if the v8 profiles table is
-    // not yet applied in this environment.
-    try { await r.supabase.from('profiles').update({ role: 'host' }).eq('id', user.id) } catch { /* ignored */ }
     res.status(201).json(data)
   } catch (e) {
     next(e)
@@ -153,12 +150,12 @@ router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
 router.delete('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const r = req as AuthedRequest
-    const { error, count } = await r.supabase
+    const { data, error } = await r.supabase
       .from('venues')
-      .delete({ count: 'exact' })
+      .update({ deleted_at: new Date().toISOString(), status: 'unlisted' } as Partial<VenueRow>)
       .eq('id', req.params.id as string)
     if (error) throw error
-    if (!count) { res.status(404).json({ error: 'Venue not found.' }); return }
+    if (!data) { res.status(404).json({ error: 'Venue not found.' }); return }
     res.json({ success: true })
   } catch (e) {
     next(e)

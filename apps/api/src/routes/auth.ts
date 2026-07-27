@@ -10,18 +10,9 @@ import {
   refreshCookieOptions,
   readCookie,
 } from '../lib/cookies.js'
+import { SignUpSchema, SignInSchema, ResetPasswordSchema, UpdatePasswordSchema, validationErrorBody } from '../lib/validation.js'
 
 const router = Router()
-
-interface AuthBody {
-  email?: string
-  password?: string
-  name?: string
-}
-
-function badRequest(res: Response, message: string): void {
-  res.status(400).json({ error: message })
-}
 
 function setSessionCookies(res: Response, session: { access_token: string; refresh_token?: string }): void {
   setCookie(res, ACCESS_TOKEN_COOKIE, session.access_token, authCookieOptions())
@@ -42,11 +33,9 @@ router.post('/signup', async (req: Request, res: Response, next: NextFunction) =
       res.status(503).json({ error: 'API not configured.' })
       return
     }
-    const { email, password, name } = req.body as AuthBody
-    if (!email || !password) {
-      badRequest(res, 'Email and password are required.')
-      return
-    }
+    const parsed = SignUpSchema.safeParse(req.body)
+    if (!parsed.success) { res.status(422).json(validationErrorBody(parsed.error)); return }
+    const { email, password, name } = parsed.data
     const { data, error } = await supabaseAdmin.auth.signUp({
       email,
       password,
@@ -70,11 +59,9 @@ router.post('/signin', async (req: Request, res: Response, next: NextFunction) =
       res.status(503).json({ error: 'API not configured.' })
       return
     }
-    const { email, password } = req.body as AuthBody
-    if (!email || !password) {
-      badRequest(res, 'Email and password are required.')
-      return
-    }
+    const parsed = SignInSchema.safeParse(req.body)
+    if (!parsed.success) { res.status(422).json(validationErrorBody(parsed.error)); return }
+    const { email, password } = parsed.data
     const { data, error } = await supabaseAdmin.auth.signInWithPassword({ email, password })
     if (error || !data.session) {
       res.status(401).json({ error: error?.message || 'Invalid credentials.' })
@@ -92,6 +79,8 @@ router.post('/signin', async (req: Request, res: Response, next: NextFunction) =
 // cookies is the practical sign-out for this SPA model.
 router.post('/signout', async (_req: Request, res: Response, next: NextFunction) => {
   try {
+    const access = readCookie(_req, ACCESS_TOKEN_COOKIE)
+    if (access && supabaseAdmin) await supabaseAdmin.auth.admin.signOut(access, 'global').catch(() => undefined)
     clearSessionCookies(res)
     res.json({ success: true })
   } catch (e) {
@@ -168,14 +157,13 @@ router.post('/reset-password', async (req: Request, res: Response, next: NextFun
       res.status(503).json({ error: 'API not configured.' })
       return
     }
-    const { email } = req.body as AuthBody
-    if (!email) {
-      badRequest(res, 'Email is required.')
-      return
-    }
-    const origin = req.headers.origin || `${req.protocol}://${req.get('host')}`
+    const parsed = ResetPasswordSchema.safeParse(req.body)
+    if (!parsed.success) { res.status(422).json(validationErrorBody(parsed.error)); return }
+    const { email } = parsed.data
+    const webOrigin = process.env.WEB_ORIGIN || (process.env.NODE_ENV === 'test' ? 'http://localhost:5173' : '')
+    if (!webOrigin) { res.status(503).json({ error: 'API web origin is not configured.' }); return }
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/reset-password`,
+      redirectTo: `${webOrigin.replace(/\/$/, '')}/reset-password`,
     })
     if (error) {
       res.status(422).json({ error: error.message })
@@ -194,11 +182,9 @@ router.post('/update-password', async (req: Request, res: Response, next: NextFu
       res.status(503).json({ error: 'API not configured.' })
       return
     }
-    const { password } = req.body as AuthBody
-    if (!password) {
-      badRequest(res, 'Password is required.')
-      return
-    }
+    const parsed = UpdatePasswordSchema.safeParse(req.body)
+    if (!parsed.success) { res.status(422).json(validationErrorBody(parsed.error)); return }
+    const { password } = parsed.data
     const access = readCookie(req, ACCESS_TOKEN_COOKIE)
     if (!access) {
       res.status(401).json({ error: 'Authentication required.' })

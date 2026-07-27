@@ -216,7 +216,7 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
     }
     const { error } = await r.supabase
       .from('bookings')
-      .delete()
+      .update({ status: 'cancelled', deleted_at: new Date().toISOString() })
       .eq('id', req.params.id as string)
     if (error) throw error
     res.json({ success: true })

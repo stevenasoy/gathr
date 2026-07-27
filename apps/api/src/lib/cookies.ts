@@ -4,7 +4,7 @@
 
 import type { Response, Request } from 'express'
 
-const isProd = process.env.NODE_ENV === 'production'
+const isSecure = !['development', 'test'].includes(process.env.NODE_ENV || '')
 
 export interface CookieOptions {
   httpOnly?: boolean
@@ -49,7 +49,7 @@ export const REFRESH_TOKEN_COOKIE = 'gathr.refresh_token'
 export function authCookieOptions(): CookieOptions {
   return {
     httpOnly: true,
-    secure: isProd,
+    secure: isSecure,
     sameSite: 'Lax',
     path: '/',
     // Access token lifetime matches Supabase default (1h). The cookie expiry is
@@ -61,7 +61,7 @@ export function authCookieOptions(): CookieOptions {
 export function refreshCookieOptions(): CookieOptions {
   return {
     httpOnly: true,
-    secure: isProd,
+    secure: isSecure,
     sameSite: 'Lax',
     path: '/api/auth',
     // Refresh token lifetime: Supabase default is ~30 days. Keep the cookie in

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **Node.js** >= 18
+- **Node.js** >= 24
 - **npm** >= 9 (ships with Node 18+)
 - A **Supabase** project ([supabase.com](https://supabase.com))
 
@@ -18,7 +18,7 @@ cd gathr
 ### 2. Install dependencies
 
 ```bash
-npm install
+npm ci
 ```
 
 This installs dependencies for all workspaces (`apps/web`, `apps/api`, `apps/demo`, `packages/shared`).
@@ -78,3 +78,11 @@ npm run dev:demo
 | `npm run build`     | Build the web app              |
 | `npm run build:all` | Build all apps                 |
 | `npm run lint`      | Lint the web app               |
+
+### Local security checks
+
+```bash
+npm exec supabase start
+psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/apply-all.sql
+npm exec supabase stop
+```

@@ -10,12 +10,15 @@ import type { AuthedRequest } from '../types/express.js'
 // and build a lightweight User object. If the secret is not configured we fall
 // back to the network call to auth.getUser() (existing behavior).
 const JWT_SECRET = process.env.SUPABASE_JWT_SECRET
+const SUPABASE_URL = process.env.SUPABASE_URL?.replace(/\/$/, '')
 
 async function userFromToken(token: string): Promise<User | null> {
   if (!JWT_SECRET || !token) return null
   try {
     const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET), {
       algorithms: ['HS256'],
+      issuer: SUPABASE_URL ? `${SUPABASE_URL}/auth/v1` : undefined,
+      audience: 'authenticated',
     })
     if (!payload.sub) return null
     return {

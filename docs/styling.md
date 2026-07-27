@@ -6,10 +6,13 @@ One global stylesheet, `apps/web/src/index.css`, driven by CSS custom properties
 
 | Token | Value | Usage |
 |---|---|---|
-| `--brand` | `#6c2bd9` | Primary ultraviolet |
-| `--brand-2` | `#e0218a` | Secondary magenta (gradient pair) |
+| `--brand` | `#7c3aed` | Serene violet (psychologically light) |
+| `--brand-2` | `#ec4899` | Sakura pink |
 | `--gold` | *(see CSS)* | Ratings / stars |
-| `--bg` | `#fbfaf8` | Light theme background |
+| `--bg` | `#fcfbfe` | Light theme background (lavender tinted, airy) |
+| `--ink` | `#2d2736` | Body text (soft charcoal plum-slate) |
+| `--line` | `#f0ecf5` | Soft lavender whisper border |
+| `--tint` | `#f6f4fa` | Lavender ice hover tint |
 
 ## Fonts
 

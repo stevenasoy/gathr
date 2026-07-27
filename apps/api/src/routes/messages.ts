@@ -111,31 +111,10 @@ router.post('/latest', async (req: Request, res: Response, next: NextFunction) =
       return
     }
 
-    // Single round-trip: fetch the needed columns for every requested thread id
-    // ordered by (col asc, created_at desc). Because rows are sorted col-asc
-    // then created_at-desc, the FIRST row encountered for any given id is the
-    // latest message for that thread — the same row the old per-id
-    // .order(created_at desc).limit(1).maybeSingle() query returned. Dedupe
-    // client-side by keeping the first row seen per id.
-    const { data, error } = await (req as AuthedRequest).supabase
-      .from('messages')
-      .select('id,body,created_at,sender_id,booking_id,conversation_id')
-      .in(col, ids)
-      .order(col, { ascending: true })
-      .order('created_at', { ascending: false })
-
+    const { data, error } = await ((req as AuthedRequest).supabase as any).rpc('latest_messages', { p_thread_kind: col, p_thread_ids: ids })
     if (error) throw error
-
     const latestMap: Record<string, any> = {}
-    for (const row of data || []) {
-      const threadId = row[col] as string
-      // Rows are ordered (col asc, created_at desc): the first row seen for a
-      // given threadId is its latest message. Skip subsequent rows for the same
-      // thread so only the latest is kept.
-      if (latestMap[threadId] === undefined) {
-        latestMap[threadId] = row
-      }
-    }
+    for (const row of (data || []) as any[]) latestMap[row.thread_id] = row
     res.json({ latest: latestMap })
   } catch (e) {
     next(e)
