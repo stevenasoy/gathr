@@ -142,7 +142,11 @@ export default function Home() {
 
   return (
     <>
-      {!user && (
+      {user ? (
+        <div className="max-w-wrap mx-auto px-6 sm:px-10 pt-3 pb-5">
+          <SearchBar />
+        </div>
+      ) : (
         <section className="relative overflow-hidden bg-canvas min-h-[100dvh] -mt-[88px] flex items-center">
           {/* Layered ambient lighting for a premium mesh glow */}
           <div className="absolute inset-0 z-0 opacity-80" style={{ 
