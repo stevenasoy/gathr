@@ -1,6 +1,11 @@
 # dependencies
 node_modules
 
+# lockfiles from other package managers — this repo is npm workspaces and CI
+# runs `npm ci`, so package-lock.json is the only lockfile we track
+pnpm-lock.yaml
+yarn.lock
+
 # build output
 dist
 
@@ -32,3 +37,6 @@ drive.mjs
 
 # isolated implementation worktrees
 .worktrees/
+
+# playwright output
+test-results
