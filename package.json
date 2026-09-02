@@ -6,18 +6,19 @@
     "apps/*",
     "packages/*"
   ],
+  "packageManager": "npm@11.6.2",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "dev": "concurrently --raw --names \"web,api\" --prefix-colors cyan,magenta -- \"npm run dev:web\" \"npm run dev:api\"",
-    "dev:web": "npm run dev --workspace=apps/web",
-    "dev:demo": "npm run dev --workspace=apps/demo",
-    "dev:api": "npm run dev --workspace=apps/api",
-    "build": "npm run build --workspace=apps/web",
-    "build:api": "npm run build --workspace=apps/api",
-    "build:demo": "npm run build --workspace=apps/demo",
-    "build:all": "npm run build --workspaces --if-present",
+    "dev": "node init && concurrently --raw --names \"web,api\" --prefix-colors cyan,magenta -- \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "node init && npm run dev --workspace=apps/web",
+    "dev:demo": "node init && npm run dev --workspace=apps/demo",
+    "dev:api": "node init && npm run dev --workspace=apps/api",
+    "build": "node init && npm run build --workspace=apps/web",
+    "build:api": "node init && npm run build --workspace=apps/api",
+    "build:demo": "node init && npm run build --workspace=apps/demo",
+    "build:all": "node init && npm run build --workspaces --if-present",
     "typecheck": "npm run build --workspace=apps/web && npm run build --workspace=apps/api",
     "lint": "npm run lint --workspace=apps/web",
     "preview": "npm run preview --workspace=apps/web",
