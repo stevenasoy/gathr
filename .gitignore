@@ -1,13 +1,15 @@
 # dependencies
 node_modules
 
+# lockfiles from other package managers — this repo is npm workspaces and CI
+# runs `npm ci`, so package-lock.json is the only lockfile we track
+pnpm-lock.yaml
+yarn.lock
+
 # build output
 dist
 
 # environment — never commit real env files; only .env.example variants are tracked
-.env
-.env.*
-.env.local
 .env.*.local
 !.env.example
 !.env.*.example
@@ -32,3 +34,7 @@ drive.mjs
 
 # isolated implementation worktrees
 .worktrees/
+
+# playwright output
+test-results
+config.bat
