@@ -6,6 +6,10 @@ import type { Message, DbError } from '../types'
 // A thread is identified by a column ('booking_id' or 'conversation_id') + id.
 export type ThreadColumn = 'booking_id' | 'conversation_id'
 
+// The API sets `masked` when it replaced contact details in a pre-confirmation
+// thread (inquiries, and bookings still waiting on the Host).
+export type SentMessage = Message & { masked?: boolean }
+
 export async function listMessages(col: ThreadColumn, id: string): Promise<{ data: MessageRow[] | null; error: DbError | null }> {
   try {
     if (!id) return { data: [], error: null }
@@ -28,10 +32,10 @@ export async function sendMessage({
   id: string
   senderId: string
   body: string
-}): Promise<{ data: Message | null; error: DbError | null }> {
+}): Promise<{ data: SentMessage | null; error: DbError | null }> {
   try {
     if (!senderId) return { data: null, error: { message: 'Authentication required.' } }
-    const data = await apiJson<Message>('/api/messages', { method: 'POST', body: { col, id, body } })
+    const data = await apiJson<SentMessage>('/api/messages', { method: 'POST', body: { col, id, body } })
     return { data, error: null }
   } catch (e: unknown) {
     console.error('sendMessage failed:', e)

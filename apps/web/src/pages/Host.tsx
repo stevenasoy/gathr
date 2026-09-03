@@ -18,6 +18,7 @@ const FAQ = [
   { q: 'How long until my listing is live?', a: 'Right away. You create the listing yourself in a few steps and it appears in search immediately. You can delete it anytime.' },
   { q: 'How do bookings work?', a: 'Guests send a request with their date, hours, and guest count. You review it in your dashboard and confirm or decline. Nothing is committed until you confirm.' },
   { q: 'Can I edit or remove my listing?', a: 'You can delete a listing anytime from your dashboard. In-place editing of listing details is on the way.' },
+  { q: 'What if a guest asks to book me directly?', a: 'Bookings that start on Gathr stay on Gathr. Contact details in messages are hidden until you confirm, and a booking taken off-platform loses reviews, cancellation protection, and Gathr support. Confirm on Gathr and the guest can reach you however you like.' },
 ]
 
 export default function Host() {

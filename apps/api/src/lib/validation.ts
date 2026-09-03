@@ -24,10 +24,15 @@ export function parsePagination(req: Request): { limit: number; offset: number }
   return { limit, offset }
 }
 
+// 24-hour wall clock, HH:MM. Stored in the `time` column; null means the
+// whole day.
+export const startTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'start_time must be HH:MM (24-hour).')
+
 export const CreateBookingSchema = z.object({
   venue_id: uuid,
   event_type: nullableText(120),
   event_date: z.string().date(),
+  start_time: startTimeSchema.nullable().optional(),
   hours: z.number().int().min(1).max(168),
   guests: z.number().int().positive().nullable().optional(),
   note: nullableText(2000),

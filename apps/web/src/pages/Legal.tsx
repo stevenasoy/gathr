@@ -32,7 +32,8 @@ const CONTENT: Record<string, LegalContent> = {
     sections: [
       { h: 'Using Gathr', p: 'Gathr is a marketplace that connects venue hosts with guests. We are not the venue. The host is the operator of record and is responsible for what happens at their space.' },
       { h: 'Booking and payment', p: 'When you request a booking, you authorize Gathr to charge your payment method if the host confirms. Service fees are non-refundable except in cases of host cancellation.' },
-      { h: 'Cancellations', p: 'Each venue sets its own cancellation policy. Read it before you book. If a host cancels on you within 14 days of your event, Gathr will help relocate you or refund in full.' },
+      { h: 'Cancellations', p: 'Each venue sets its own cancellation policy. Read it before you book. If a host cancels on you within 14 days of your event, Gathr will help relocate you or refund in full. This protection, reviews, and Gathr support apply only to bookings confirmed through Gathr.' },
+      { h: 'Bookings stay on Gathr', p: 'If you found a venue or a guest through Gathr, the booking happens on Gathr. Hosts and guests agree not to move a booking that started here off the platform to avoid the service fee. Until a booking is confirmed, Gathr hides phone numbers, emails, and links in messages. A booking taken off-platform still owes the service fee, loses all Gathr protections, and can lead to removal of the listing or account.' },
       { h: 'Host responsibilities', p: 'Hosts must accurately describe their space, honor confirmed bookings, and maintain a safe environment. Repeated violations may result in removal from the platform.' },
       { h: 'Account termination', p: 'We may suspend or terminate accounts that violate these terms or harm the community. You can delete your account anytime from settings.' },
     ],

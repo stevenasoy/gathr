@@ -12,6 +12,7 @@ const FAQ = [
   { q: 'How does payment work?', a: 'Gathr is currently a preview. A confirmed request is an agreement between you and the guest, and you arrange payment directly. Built-in online payments and payouts are on the roadmap.' },
   { q: 'Are there any hidden fees?', a: 'No. The 10% guest service fee is the only fee. No subscriptions, no listing fees, no markups.' },
   { q: 'Can I change my price later?', a: 'You set your hourly rate when you list. You can delete and re-list to change it for now; in-place editing is on the way.' },
+  { q: 'What if someone wants to skip Gathr and pay me directly?', a: 'A booking that started on Gathr stays on Gathr. Until you confirm, phone numbers, emails, and links in messages are hidden. Off-platform bookings still owe the service fee and get no reviews, no cancellation protection, and no Gathr support.' },
 ]
 
 export default function PricingGuide() {

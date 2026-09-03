@@ -10,7 +10,7 @@ import { useVenues } from '../context/VenuesContext'
 import { fetchBooking, cancelBooking, setBookingStatus } from '../lib/bookings'
 import { fetchVenue } from '../lib/venues'
 import { getReviewForBooking, createReview } from '../lib/reviews'
-import { peso, fmtDate, fmtWhen, todayYMD } from '../lib/format'
+import { peso, fmtDate, fmtWhen, fmtSlot, todayYMD } from '../lib/format'
 import { srcSet, withWidth, gallerySizes } from '../lib/images'
 import type { Venue, Review } from '../types'
 import type { BookingRow } from '../types/db'
@@ -240,7 +240,7 @@ export default function BookingDetail() {
         <div className="border border-line rounded-lg bg-white mt-[22px]">
           <div className="flex gap-3 py-4 px-[18px] border-b border-line text-[14.5px]"><CalendarCheck size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Date</b><span className="font-mono">{fmtDate(b.event_date, 'long')}</span></span></div>
           {b.event_type && <div className="flex gap-3 py-4 px-[18px] border-b border-line text-[14.5px]"><MapPin size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Event</b>{b.event_type}</span></div>}
-          <div className="flex gap-3 py-4 px-[18px] border-b border-line text-[14.5px]"><Clock size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Duration</b><span className="font-mono">{b.hours}</span> hours</span></div>
+          <div className="flex gap-3 py-4 px-[18px] border-b border-line text-[14.5px]"><Clock size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Time</b><span className="font-mono">{fmtSlot(b.start_time, b.hours)}</span> · <span className="font-mono">{b.hours}</span> hours</span></div>
           {b.guests != null && <div className="flex gap-3 py-4 px-[18px] border-b border-line text-[14.5px]"><Users size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Guests</b><span className="font-mono">{b.guests}</span></span></div>}
           {b.note && <div className="flex gap-3 py-4 px-[18px] text-[14.5px]"><StickyNote size={18} className="text-brand shrink-0 mt-0.5" /><span><b className="text-xs uppercase tracking-[0.04em] text-ink-soft block">Special requests</b>{b.note}</span></div>}
         </div>

@@ -17,7 +17,7 @@ import { createBooking } from '../lib/bookings'
 import { unitWord } from '../lib/venues'
 import { getOrCreateConversation } from '../lib/conversations'
 import { listReviews } from '../lib/reviews'
-import { peso, todayYMD } from '../lib/format'
+import { peso, todayYMD, fmtSlot } from '../lib/format'
 import { srcSet, withWidth, gallerySizes } from '../lib/images'
 import type { Review, PriceUnit } from '../types'
 
@@ -42,6 +42,7 @@ export default function Venue() {
   const [hours, setHours] = useState(4)
   const [guests, setGuests] = useState('')
   const [date, setDate] = useState('')
+  const [startTime, setStartTime] = useState('')
   const [eventType, setEventType] = useState('')
   const [note, setNote] = useState('')
   const [requested, setRequested] = useState(false)
@@ -123,6 +124,7 @@ export default function Venue() {
         venue_name: venue!.name,
         event_type: eventType || null,
         event_date: date,
+        start_time: startTime || null,
         hours,
         guests: guestCount,
         total_php: total,
@@ -322,7 +324,8 @@ export default function Venue() {
             <div className="py-[26px] border-t border-line">
               {realCount > 0 ? (
                 <>
-                  <h2 className="text-xl font-bold mb-3.5"><Star size={18} className="text-gold fill-gold inline-block align-[-3px]" /> <span className="font-mono">{realAvg}</span> · {realCount} review{realCount > 1 ? 's' : ''}</h2>
+                  <h2 className="text-xl font-bold mb-1.5"><Star size={18} className="text-gold fill-gold inline-block align-[-3px]" /> <span className="font-mono">{realAvg}</span> · {realCount} review{realCount > 1 ? 's' : ''}</h2>
+                  <p className="text-ink-soft text-sm mb-[18px]">Only guests who booked and held their event through Gathr can leave a review.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-6">
                     {realReviews.map((r) => (
                       <div key={r.id}>
@@ -330,7 +333,7 @@ export default function Venue() {
                           <div className="w-10 h-10 rounded-full bg-tint text-brand grid place-items-center font-bold">{(r.author_name || 'G')[0].toUpperCase()}</div>
                           <div>
                             <b className="text-[15px]">{r.author_name}</b>
-                            <div className="text-ink-faint text-[13px]">{new Date(r.created_at).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</div>
+                            <div className="text-ink-faint text-[13px]">{new Date(r.created_at).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })} · <span className="text-brand font-semibold">Booked on Gathr</span></div>
                           </div>
                           <Stars rating={r.rating} />
                         </div>
@@ -390,18 +393,23 @@ export default function Venue() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2">
-                  <div className="py-[11px] px-3.5 border-r border-line-strong">
+                  <div className="py-[11px] px-3.5 border-b border-r border-line-strong">
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.04em]">Start time <span className="font-normal text-ink-faint normal-case tracking-normal">(optional)</span></label>
+                    <input type="time" step={1800} value={startTime} onChange={(e) => setStartTime(e.target.value)} aria-label="Start time" className="border-0 outline-0 w-full font-[inherit] text-sm bg-transparent text-ink appearance-none pt-0.5" />
+                  </div>
+                  <div className="py-[11px] px-3.5 border-b border-line-strong">
                     <label className="block text-[11px] font-bold uppercase tracking-[0.04em]">{unit === 'hour' ? 'Hours' : lockedDuration ? 'Duration · set by host' : 'Duration (hrs)'}</label>
                     <input type="number" min="1" max="24" value={hours} disabled={lockedDuration}
                       onChange={(e) => setHours(Math.max(1, Number(e.target.value) || 1))}
                       className="border-0 outline-0 w-full font-[inherit] text-sm bg-transparent text-ink appearance-none pt-0.5" style={lockedDuration ? { color: 'var(--ink-soft)', cursor: 'not-allowed' } : undefined} />
                   </div>
-                  <div className="py-[11px] px-3.5">
-                    <label className="block text-[11px] font-bold uppercase tracking-[0.04em]">Guests</label>
-                    <input type="number" min="1" max={venue.capacity} placeholder={`Max ${venue.capacity}`} value={guests} onChange={(e) => setGuests(e.target.value)} className="border-0 outline-0 w-full font-[inherit] text-sm bg-transparent text-ink appearance-none pt-0.5" />
-                  </div>
+                </div>
+                <div className="py-[11px] px-3.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.04em]">Guests</label>
+                  <input type="number" min="1" max={venue.capacity} placeholder={`Max ${venue.capacity}`} value={guests} onChange={(e) => setGuests(e.target.value)} className="border-0 outline-0 w-full font-[inherit] text-sm bg-transparent text-ink appearance-none pt-0.5" />
                 </div>
               </div>
+              <p className="text-ink-faint text-xs -mt-1.5 mb-3.5">{startTime ? `Holds ${fmtSlot(startTime, hours)}.` : 'No start time holds the venue for the whole day.'}</p>
 
               <div className="mb-3.5">
                 <label className="block text-[11px] font-bold uppercase tracking-[0.04em] mb-1.5">Special requests <span className="font-normal text-ink-faint">(optional)</span></label>

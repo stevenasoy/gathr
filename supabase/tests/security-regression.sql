@@ -265,4 +265,51 @@ select pg_temp.assert_true(
                   and with_check like '%can_upload_venue_photo()%')),
   'venue photo insert policy lacks owner path or quota helper'
 );
+
+-- v11: contact masking before confirmation
+select pg_temp.assert_true(
+  exists (select 1 from pg_trigger t join pg_class c on c.oid = t.tgrelid
+           where c.relname = 'messages' and t.tgname = 'messages_mask_contact_before_confirm' and not t.tgisinternal),
+  'messages has no mask_contact_before_confirm trigger'
+);
+select pg_temp.assert_true(
+  coalesce((select proconfig @> array['search_path='] from pg_proc where oid = 'public.mask_contact_before_confirm()'::regprocedure), false),
+  'mask_contact_before_confirm does not pin an empty search_path'
+);
+select pg_temp.assert_true(
+  not has_function_privilege('authenticated', 'public.mask_contact_before_confirm()', 'EXECUTE'),
+  'authenticated can execute trigger-only mask_contact_before_confirm'
+);
+select pg_temp.assert_true(
+  coalesce((select pg_get_functiondef('public.mask_contact_before_confirm()'::regprocedure)
+    like '%in (''confirmed'', ''completed'')%'), false),
+  'mask_contact_before_confirm does not exempt confirmed bookings'
+);
+
+-- v12: start_time and non-overlapping confirmed slots
+select pg_temp.assert_true(
+  exists (select 1 from information_schema.columns
+           where table_schema = 'public' and table_name = 'bookings' and column_name = 'start_time'),
+  'bookings has no start_time column'
+);
+select pg_temp.assert_true(
+  exists (select 1 from pg_constraint where conname = 'bookings_no_overlap_confirmed' and contype = 'x'),
+  'bookings has no exclusion constraint on confirmed slots'
+);
+select pg_temp.assert_true(
+  not exists (select 1 from pg_indexes where schemaname = 'public' and indexname = 'bookings_one_confirmed_per_date'),
+  'old one-confirmed-per-date index still present'
+);
+select pg_temp.assert_true(
+  coalesce((select pg_get_functiondef('public.guard_bookings_host_mutable()'::regprocedure)
+    like '%NEW.start_time is distinct from OLD.start_time%'), false),
+  'guard_bookings_host_mutable does not freeze start_time'
+);
+select pg_temp.assert_true(
+  public.booking_slot('2026-09-04', '14:00', 4) && public.booking_slot('2026-09-04', '17:00', 4)
+  and not (public.booking_slot('2026-09-04', '14:00', 4) && public.booking_slot('2026-09-04', '18:00', 4))
+  and public.booking_slot('2026-09-04', null, 4) && public.booking_slot('2026-09-04', '23:00', 1)
+  and public.booking_slot(null, '14:00', 4) is null,
+  'booking_slot overlap semantics are wrong'
+);
 rollback;

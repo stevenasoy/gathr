@@ -8,7 +8,7 @@
 
 Shows:
 - Venue photos (from catalog, or `fetchVenue` for a Host's own unlisted venue)
-- Date/duration/guests/event-type
+- Date, time slot (`start_time` + `hours`, rendered by `fmtSlot`; no start time means the whole day), guests, event type
 - Special-requests note
 - Total price
 - Role-appropriate actions:
@@ -41,6 +41,15 @@ Open a specific thread with `?b=<bookingId>` or `?c=<conversationId>`.
 
 - **Booking threads** pin a booking summary card at the top (status, date, guests, total, note, link to detail)
 - **Inquiry threads** show "Inquiry · no booking yet"
+
+### Keep-it-on-Gathr masking
+
+Until a booking is `confirmed` or `completed`, phone numbers, emails, links and `@handles` in a message are replaced with `[hidden until the booking is confirmed]`. Inquiry threads are always masked. Two layers, keep them in step:
+
+- API: `apps/api/src/lib/contact-mask.ts`, applied in `POST /api/messages`. The response carries `masked: true` so the composer can show why.
+- DB: `supabase/v11-keep-bookings-on-gathr.sql` trigger, for anything that inserts into `messages` without going through the API.
+
+The composer shows a standing hint on pre-confirmation threads and a stronger notice after a masked send. The terms page has the matching "Bookings stay on Gathr" clause.
 
 ### Implementation notes
 

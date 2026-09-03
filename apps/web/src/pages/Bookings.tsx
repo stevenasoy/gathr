@@ -6,7 +6,7 @@ import { RowListSkeleton } from '../components/Skeleton'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useAuth } from '../context/AuthContext'
 import { listBookings, cancelBooking } from '../lib/bookings'
-import { peso, fmtDate } from '../lib/format'
+import { peso, fmtDate, fmtClock } from '../lib/format'
 import type { Booking } from '../types'
 
 export default function Bookings() {
@@ -110,7 +110,7 @@ export default function Bookings() {
                     <div className="flex flex-wrap gap-3.5 text-ink-soft text-[13.5px]">
                       <span className="inline-flex items-center gap-1"><CalendarCheck size={15} className="text-ink-faint" /> <span className="font-mono">{fmtDate(b.event_date)}</span></span>
                       {b.event_type && <span className="inline-flex items-center gap-1"><MapPin size={15} className="text-ink-faint" /> {b.event_type}</span>}
-                      <span className="inline-flex items-center gap-1"><Clock size={15} className="text-ink-faint" /> <span className="font-mono">{b.hours}</span> hrs</span>
+                      <span className="inline-flex items-center gap-1"><Clock size={15} className="text-ink-faint" /> <span className="font-mono">{b.start_time ? `${fmtClock(b.start_time)} · ` : ''}{b.hours}</span> hrs</span>
                       {b.guests && <span className="inline-flex items-center gap-1"><Users size={15} className="text-ink-faint" /> <span className="font-mono">{b.guests}</span> guests</span>}
                     </div>
                     {b.note && <div className="mt-2 text-[13.5px] text-ink-soft flex gap-1.5 items-start"><StickyNote size={15} className="text-brand shrink-0 mt-0.5" /> <span>{b.note}</span></div>}
