@@ -11,4 +11,6 @@
 \ir ../v9-public-views.sql
 \ir ../v10-security-hardening.sql
 \ir ../v10-security-hardening.sql
+\ir ../v11-keep-bookings-on-gathr.sql
+\ir ../v12-booking-start-time.sql
 \ir ./security-regression.sql

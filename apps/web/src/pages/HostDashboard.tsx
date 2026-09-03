@@ -11,7 +11,7 @@ import { useVenues } from '../context/VenuesContext'
 import { useMode } from '../context/ModeContext'
 import { fetchMyVenues, deleteVenue, setVenueStatus, unitWord } from '../lib/venues'
 import { listRequestsForVenues, setBookingStatus } from '../lib/bookings'
-import { peso, fmtDate, toYMD, todayYMD } from '../lib/format'
+import { peso, fmtDate, fmtClock, toYMD, todayYMD } from '../lib/format'
 import { srcSet, withWidth, cardSizes } from '../lib/images'
 import type { Venue, BookingRow } from '../types'
 
@@ -171,7 +171,9 @@ export default function HostDashboard() {
   }
 
   const todayStr = todayYMD()
-  const byDate = (a: BookingRow, b: BookingRow) => (a.event_date || '').localeCompare(b.event_date || '')
+  // Date first, then start time; whole-day bookings (no start_time) sort first.
+  const byDate = (a: BookingRow, b: BookingRow) =>
+    (a.event_date || '').localeCompare(b.event_date || '') || (a.start_time || '').localeCompare(b.start_time || '')
   const pending = requests.filter((r) => r.status === 'requested')
   const todayEvents = requests.filter((r) => r.status === 'confirmed' && r.event_date === todayStr)
   const upcomingEvents = requests
@@ -401,7 +403,7 @@ function RequestRow({ b, onStatus }: { b: BookingRow; onStatus: (id: string, sta
         <div className="flex flex-wrap gap-3.5 text-ink-soft text-[13.5px]">
           <span className="inline-flex items-center gap-1"><CalendarCheck size={15} className="text-ink-faint" /> <span className="font-mono">{fmtDate(b.event_date)}</span></span>
           {b.event_type && <span className="inline-flex items-center gap-1"><MapPin size={15} className="text-ink-faint" /> {b.event_type}</span>}
-          <span className="inline-flex items-center gap-1"><Clock size={15} className="text-ink-faint" /> <span className="font-mono">{b.hours}</span> hrs</span>
+          <span className="inline-flex items-center gap-1"><Clock size={15} className="text-ink-faint" /> <span className="font-mono">{b.start_time ? `${fmtClock(b.start_time)} · ` : ''}{b.hours}</span> hrs</span>
           {b.guests && <span className="inline-flex items-center gap-1"><Users size={15} className="text-ink-faint" /> <span className="font-mono">{b.guests}</span> guests</span>}
           <span><b className="font-mono text-ink">{peso(b.total_php)}</b></span>
         </div>
@@ -430,6 +432,8 @@ function CalendarTab({ month, setMonth, requests }: { month: Date; setMonth: (d:
     const key = r.event_date as string
     ;(byDate[key] = byDate[key] || []).push(r)
   })
+  // Whole-day bookings first, then by start time.
+  Object.values(byDate).forEach((list) => list.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || '')))
 
   const cells: (number | null)[] = []
   for (let i = 0; i < firstDow; i++) cells.push(null)
@@ -456,7 +460,7 @@ function CalendarTab({ month, setMonth, requests }: { month: Date; setMonth: (d:
               <span className={`text-[13px] font-semibold w-6 h-6 grid place-items-center rounded-full ${ds === todayStr ? 'bg-brand text-white' : ''}`}>{d}</span>
               {items.slice(0, 3).map((r) => (
                 <Link to={`/venue/${r.venue_id}`} key={r.id} className={`text-[11px] font-semibold py-[3px] px-[7px] rounded-md whitespace-nowrap overflow-hidden text-ellipsis text-white ${r.status === 'requested' ? 'bg-[#e0a32e]' : 'bg-brand'}`} title={`${r.venue_name} · ${r.status}`}>
-                  {r.venue_name}
+                  {r.start_time ? `${fmtClock(r.start_time)} · ` : ''}{r.venue_name}
                 </Link>
               ))}
               {items.length > 3 && <span className="text-[11px] text-ink-soft pl-0.5">+{items.length - 3} more</span>}

@@ -52,7 +52,10 @@ Schema is split across files — run them in order:
 | `v2-schema.sql` | status, host_type, price_unit, included_hours, `messages`, realtime, cancel-confirmed policy |
 | `v3-schema.sql` | `conversations` + nullable booking_id/conversation_id on messages + their realtime |
 | `v4-schema.sql` | `venue-photos` bucket + policies, `reviews` table |
+| `v5` to `v10` | Hardening, performance, public views, review stats, privileged-function lockdown (see `docs/ops.md`) |
+| `v12-booking-start-time.sql` | `bookings.start_time time` (nullable, whole day when null). Replaces the one-confirmed-per-date index with the `bookings_no_overlap_confirmed` exclusion constraint (btree_gist) on `booking_slot(event_date, start_time, hours)`: confirmed slots on one venue may not overlap. `start_time` joins the immutable set in `guard_bookings_host_mutable`. |
+| `v11-keep-bookings-on-gathr.sql` | `messages` BEFORE INSERT trigger `messages_mask_contact_before_confirm`: hides phone numbers, emails, links and @handles in inquiry threads and in booking threads until the booking is `confirmed` or `completed`. Mirrors `apps/api/src/lib/contact-mask.ts`. |
 
-All five are applied to the live project (v4 applied 2026-06-11).
+v1 to v4 are applied to the live project (v4 applied 2026-06-11). Check `docs/ops.md` for the rest before assuming they are live.
 
 **DDL cannot be run from the app** — the publishable key can't alter schema. Schema changes are applied by hand in the Supabase SQL editor; after adding a column to a payload, run the matching `ALTER TABLE` or inserts will error.

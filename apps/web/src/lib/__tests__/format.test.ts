@@ -1,5 +1,31 @@
 import { describe, it, expect } from 'vitest'
-import { peso, fmtDate, toYMD, fmtWhen } from '../format'
+import { peso, fmtDate, toYMD, fmtWhen, fmtClock, fmtSlot } from '../format'
+
+describe('fmtClock', () => {
+  it('renders HH:MM and HH:MM:SS as a 12-hour clock', () => {
+    expect(fmtClock('14:00')).toBe('2:00 PM')
+    expect(fmtClock('09:30:00')).toBe('9:30 AM')
+    expect(fmtClock('00:00')).toBe('12:00 AM')
+    expect(fmtClock('12:15')).toBe('12:15 PM')
+  })
+  it('returns empty for missing or malformed input', () => {
+    expect(fmtClock(null)).toBe('')
+    expect(fmtClock('')).toBe('')
+    expect(fmtClock('noon')).toBe('')
+  })
+})
+
+describe('fmtSlot', () => {
+  it('renders start to end from a duration', () => {
+    expect(fmtSlot('14:00', 4)).toBe('2:00 PM to 6:00 PM')
+  })
+  it('wraps past midnight', () => {
+    expect(fmtSlot('22:00', 4)).toBe('10:00 PM to 2:00 AM')
+  })
+  it('says whole day when there is no start time', () => {
+    expect(fmtSlot(null, 4)).toBe('Whole day')
+  })
+})
 
 describe('peso', () => {
   it('formats a number with en-PH grouping and the peso sign', () => {

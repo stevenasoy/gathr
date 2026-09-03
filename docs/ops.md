@@ -36,7 +36,7 @@ Do **not** rely on the `index.html` meta tag for CSP in production. The repo shi
 Migrations are loose SQL files applied in order via the Supabase SQL Editor (the local runner is `supabase/tests/apply-all.sql` and is blocking in CI):
 
 ```
-schema.sql → host-schema.sql → v2-schema.sql → v3-schema.sql → v4-schema.sql → v5-schema.sql → v6-performance.sql → v7-hardening.sql → v8-polish.sql → v9-public-views.sql
+schema.sql → host-schema.sql → v2-schema.sql → v3-schema.sql → v4-schema.sql → v5-schema.sql → v6-performance.sql → v7-hardening.sql → v8-polish.sql → v9-public-views.sql → v9-review-stats-materialized.sql → v10-security-hardening.sql → v11-keep-bookings-on-gathr.sql → v12-booking-start-time.sql
 ```
 
 `v5-schema.sql` is a production hardening migration. Read its header comments first — it includes pre-flight queries and uses `NOT VALID` CHECK constraints so it won't fail on historical dirty rows. After applying, run `validate constraint` on each CHECK once the data is clean.
@@ -44,6 +44,8 @@ schema.sql → host-schema.sql → v2-schema.sql → v3-schema.sql → v4-schema
 `v8-polish.sql` is Phase 3 performance polish: materialized review stats, index cleanup/additions, and the `profiles` table. It is safe to re-run.
 
 `v9-public-views.sql` strips `owner_id` from public venue reads and `user_id` from public review reads. Apply it **after** the API is deployed and using `venues_live` / `reviews_public`; it revokes anon SELECT on the base `venues` and `reviews` tables.
+
+`v10-security-hardening.sql` locks privileged functions behind a `private` schema and freezes profile roles. `v11-keep-bookings-on-gathr.sql` adds the `messages` BEFORE INSERT trigger that hides phone numbers, emails, links and handles until the booking is confirmed. `v12-booking-start-time.sql` adds `bookings.start_time`, needs the `btree_gist` extension, and swaps the one-confirmed-per-date index for a no-overlap exclusion constraint on confirmed slots. All three are idempotent.
 
 Apply migrations to **staging first**, verify, then production. Keep the apply order — each file may `drop` and recreate policies from a prior file.
 

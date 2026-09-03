@@ -10,9 +10,6 @@ yarn.lock
 dist
 
 # environment — never commit real env files; only .env.example variants are tracked
-.env
-.env.*
-.env.local
 .env.*.local
 !.env.example
 !.env.*.example
@@ -40,3 +37,4 @@ drive.mjs
 
 # playwright output
 test-results
+config.bat

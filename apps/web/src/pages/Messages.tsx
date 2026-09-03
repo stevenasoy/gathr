@@ -9,7 +9,7 @@ import { listBookings, listRequestsForVenues } from '../lib/bookings'
 import { fetchMyVenues } from '../lib/venues'
 import { listConversationsForGuest, listConversationsForVenues } from '../lib/conversations'
 import { listMessages, sendMessage, subscribeToThread, fetchLatest } from '../lib/messages'
-import { peso, fmtTime, fmtDate as fmtDateBase } from '../lib/format'
+import { peso, fmtTime, fmtClock, fmtDate as fmtDateBase } from '../lib/format'
 import type { Message } from '../types'
 import type { BookingRow, ConversationRow } from '../types/db'
 
@@ -22,6 +22,7 @@ interface Thread {
   inquiry?: boolean
   status?: string
   event_date?: string | null
+  start_time?: string | null
   hours?: number
   guests?: number | null
   event_type?: string | null
@@ -49,6 +50,8 @@ export default function Messages({ role = 'guest', embedded = false }: MessagesP
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string>('')
+  // True right after the API hid contact details in the last sent message.
+  const [maskNotice, setMaskNotice] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
 
   // Load the user's threads: booking threads + conversation (inquiry) threads.
@@ -83,7 +86,7 @@ export default function Messages({ role = 'guest', embedded = false }: MessagesP
         const bThreads: Thread[] = bookings.map((b) => ({
           key: 'b:' + b.id, col: 'booking_id', refId: b.id,
           venue_id: b.venue_id, venue_name: b.venue_name,
-          status: b.status, event_date: b.event_date, hours: b.hours, guests: b.guests,
+          status: b.status, event_date: b.event_date, start_time: b.start_time, hours: b.hours, guests: b.guests,
           event_type: b.event_type, total_php: b.total_php, note: b.note,
         }))
         const cThreads: Thread[] = convs.map((c) => ({
@@ -118,6 +121,9 @@ export default function Messages({ role = 'guest', embedded = false }: MessagesP
   }, [user, authLoading, role]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const active = threads.find((t) => t.key === activeId)
+  // Inquiries and unconfirmed bookings: contact details are masked server-side.
+  const preConfirmation = !!active && (active.inquiry || (active.status !== 'confirmed' && active.status !== 'completed'))
+  useEffect(() => { setMaskNotice(false) }, [activeId])
 
   // Load + live-subscribe to the active thread.
   useEffect(() => {
@@ -161,8 +167,10 @@ export default function Messages({ role = 'guest', embedded = false }: MessagesP
       const { data, error } = await sendMessage({ col: active.col, id: active.refId, senderId: user.id, body })
       if (error) { setDraft(body); return }
       if (data) {
-        setMessages((cur) => (cur.some((x) => x.id === data.id) ? cur : [...cur, data]))
-        setLatest((cur) => ({ ...cur, [active.key]: data }))
+        const { masked, ...saved } = data
+        setMessages((cur) => (cur.some((x) => x.id === saved.id) ? cur : [...cur, saved]))
+        setLatest((cur) => ({ ...cur, [active.key]: saved }))
+        setMaskNotice(!!masked)
       }
     } catch (e) {
       console.error('send failed', e)
@@ -245,6 +253,7 @@ export default function Messages({ role = 'guest', embedded = false }: MessagesP
                 </div>
                 <div className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-[13.5px] text-ink">
                   <span>{fmtDate(active.event_date)}</span>
+                  {active.start_time ? <span>{fmtClock(active.start_time)}</span> : null}
                   <span>{active.hours} hrs</span>
                   {active.guests ? <span>{active.guests} guests</span> : null}
                   {active.event_type ? <span>{active.event_type}</span> : null}
@@ -269,6 +278,13 @@ export default function Messages({ role = 'guest', embedded = false }: MessagesP
               <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a message…" className="flex-1 border border-line-strong rounded-full py-2.5 px-4 font-[inherit] text-sm outline-none focus:border-brand" />
               <button className={`${baseBtn} w-auto px-4 grid place-items-center rounded-full`} type="submit" disabled={sending || !draft.trim()} aria-label="Send"><Send size={18} /></button>
             </form>
+            {preConfirmation && (
+              <p className={`m-0 px-4 pb-3 text-xs ${maskNotice ? 'text-brand font-semibold' : 'text-ink-faint'}`}>
+                {maskNotice
+                  ? 'Contact details were hidden. They unlock once the Host confirms the booking.'
+                  : 'Phone numbers, emails and links stay hidden until the booking is confirmed. Bookings that start on Gathr stay on Gathr.'}
+              </p>
+            )}
           </>
         )}
       </section>
