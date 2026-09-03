@@ -34,6 +34,8 @@ export type BookingRow = {
   venue_name: string
   event_type: string | null
   event_date: string | null
+  // HH:MM or HH:MM:SS from the `time` column. null means the whole day.
+  start_time: string | null
   hours: number
   guests: number | null
   total_php: number

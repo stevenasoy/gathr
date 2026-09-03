@@ -15,13 +15,13 @@ const router = Router()
 // Columns needed for list views. Excludes the long `note`/`body` fields that
 // are only relevant on the detail page, so list responses stay small.
 const BOOKING_LIST_COLUMNS =
-  'id,user_id,venue_id,venue_name,event_type,event_date,hours,guests,total_php,status,created_at,updated_at'
+  'id,user_id,venue_id,venue_name,event_type,event_date,start_time,hours,guests,total_php,status,created_at,updated_at'
 
 // All booking endpoints require authentication
 router.use(requireAuth)
 
-// The insert allowlist (venue_id, venue_name, event_type, event_date, hours,
-// guests, total_php, note) is enforced by CreateBookingSchema in
+// The insert allowlist (venue_id, venue_name, event_type, event_date,
+// start_time, hours, guests, total_php, note) is enforced by CreateBookingSchema in
 // lib/validation.js — user_id is pinned to the caller and status is forced to
 // 'requested' (no self-confirm).
 
