@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.js'
 import type { AuthedRequest } from '../types/express.js'
 import type { MessageRow } from '../types/db.js'
 import { CreateMessageSchema, LatestMessagesSchema, validationErrorBody } from '../lib/validation.js'
+import { maskContactInfo, isPreConfirmation } from '../lib/contact-mask.js'
 
 const router = Router()
 
@@ -52,6 +53,12 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
 // POST /api/messages — Send a message. sender_id is pinned to the caller; the
 // client cannot spoof the sender.
+//
+// Keep-it-on-Gathr rule: until a booking is confirmed, phone numbers, emails,
+// links and handles in the message are replaced with a placeholder. Inquiry
+// threads have no booking, so they are always masked. The response carries
+// `masked: true` when this happened so the client can explain why. The DB
+// trigger in v11 applies the same rule to any insert that bypasses the API.
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = (req as AuthedRequest).user
@@ -61,15 +68,29 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       return
     }
     const { col, id, body } = parsed.data
-    const row: Record<string, unknown> = { sender_id: user.id, body }
+    const supabase = (req as AuthedRequest).supabase
+
+    let preConfirmation = true
+    if (col === 'booking_id') {
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .select('status')
+        .eq('id', id)
+        .maybeSingle()
+      if (bookingError) throw bookingError
+      preConfirmation = isPreConfirmation(booking?.status)
+    }
+    const { body: storedBody, masked } = preConfirmation ? maskContactInfo(body) : { body, masked: false }
+
+    const row: Record<string, unknown> = { sender_id: user.id, body: storedBody }
     row[col] = id
-    const { data, error } = await (req as AuthedRequest).supabase
+    const { data, error } = await supabase
       .from('messages')
       .insert(row as Partial<MessageRow>)
       .select()
       .single()
     if (error) throw error
-    res.status(201).json(data)
+    res.status(201).json({ ...data, masked })
   } catch (e) {
     next(e)
   }
